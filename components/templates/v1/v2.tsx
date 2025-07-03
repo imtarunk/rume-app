@@ -21,9 +21,9 @@ import {
   SiNextdotjs,
   SiTailwindcss,
   SiDjango,
-  SiJava,
+  // SiJava,
   SiCplusplus,
-  SiCsharp,
+  // SiCsharp,
   SiGo,
   SiPhp,
   SiRuby,
@@ -31,7 +31,7 @@ import {
   SiSwift,
   SiKotlin,
   SiAngular,
-  SiVueDotJs,
+  // SiVueDotJs,
 } from "react-icons/si";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
@@ -50,9 +50,9 @@ const skillIconMap: Record<string, JSX.Element> = {
   "Next.js": <SiNextdotjs />,
   "Tailwind CSS": <SiTailwindcss />,
   Django: <SiDjango />,
-  Java: <SiJava />,
+  // Java: <SiJava />,
   "C++": <SiCplusplus />,
-  "C#": <SiCsharp />,
+  // "C#": <SiCsharp />,
   Go: <SiGo />,
   PHP: <SiPhp />,
   Ruby: <SiRuby />,
@@ -60,7 +60,6 @@ const skillIconMap: Record<string, JSX.Element> = {
   Swift: <SiSwift />,
   Kotlin: <SiKotlin />,
   Angular: <SiAngular />,
-  "Vue.js": <SiVueDotJs />,
   // Add more as needed
 };
 
