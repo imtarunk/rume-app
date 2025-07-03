@@ -35,7 +35,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - portfolio (public portfolio pages)
+     * - auth (authentication pages)
+     * - $ (the root path, i.e. /)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|portfolio).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|portfolio|auth|$).*)",
   ],
 };
