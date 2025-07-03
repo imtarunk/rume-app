@@ -7,8 +7,62 @@ import dynamic from "next/dynamic";
 import { Inter } from "next/font/google";
 import { motion } from "framer-motion";
 import GithubCalendarClient from "@/components/github-calendar-client";
+import {
+  SiReact,
+  SiNodedotjs,
+  SiPython,
+  SiJavascript,
+  SiTypescript,
+  SiHtml5,
+  SiCss3,
+  SiMongodb,
+  SiMysql,
+  SiPostgresql,
+  SiNextdotjs,
+  SiTailwindcss,
+  SiDjango,
+  SiJava,
+  SiCplusplus,
+  SiCsharp,
+  SiGo,
+  SiPhp,
+  SiRuby,
+  SiFlutter,
+  SiSwift,
+  SiKotlin,
+  SiAngular,
+  SiVueDotJs,
+} from "react-icons/si";
 
 const inter = Inter({ subsets: ["latin"], display: "swap" });
+
+const skillIconMap: Record<string, JSX.Element> = {
+  React: <SiReact />,
+  "Node.js": <SiNodedotjs />,
+  Python: <SiPython />,
+  JavaScript: <SiJavascript />,
+  TypeScript: <SiTypescript />,
+  HTML: <SiHtml5 />,
+  CSS: <SiCss3 />,
+  MongoDB: <SiMongodb />,
+  MySQL: <SiMysql />,
+  PostgreSQL: <SiPostgresql />,
+  "Next.js": <SiNextdotjs />,
+  "Tailwind CSS": <SiTailwindcss />,
+  Django: <SiDjango />,
+  Java: <SiJava />,
+  "C++": <SiCplusplus />,
+  "C#": <SiCsharp />,
+  Go: <SiGo />,
+  PHP: <SiPhp />,
+  Ruby: <SiRuby />,
+  Flutter: <SiFlutter />,
+  Swift: <SiSwift />,
+  Kotlin: <SiKotlin />,
+  Angular: <SiAngular />,
+  "Vue.js": <SiVueDotJs />,
+  // Add more as needed
+};
 
 export default function V2Portfolio({ data }: { data: any }) {
   const { name, contact = {}, skills = [], summary = "" } = data;
@@ -159,8 +213,11 @@ export default function V2Portfolio({ data }: { data: any }) {
             {skills.map((skill: string, idx: number) => (
               <span
                 key={idx}
-                className="bg-gray-900 text-white px-3 py-1 rounded-full text-sm hover:scale-105 transition"
+                className="flex items-center gap-2 bg-gray-900 text-white px-3 py-1 rounded-full text-sm hover:scale-105 transition"
               >
+                {skillIconMap[skill] && (
+                  <span className="text-lg">{skillIconMap[skill]}</span>
+                )}
                 {skill}
               </span>
             ))}

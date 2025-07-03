@@ -35,7 +35,7 @@ export interface PortfolioData {
 
 export const getPortfolioData = async ({ userId }: { userId: string }) => {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
     const response = await fetch(`${baseUrl}/api/resume/${userId}`);
     const data = await response.json();
     return data;

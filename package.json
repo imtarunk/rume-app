@@ -63,6 +63,7 @@
     "react-dropzone": "latest",
     "react-github-calendar": "^4.5.9",
     "react-hook-form": "^7.54.1",
+    "react-icons": "^5.5.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.0",
     "sonner": "^1.7.1",
