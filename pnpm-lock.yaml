@@ -42,8 +42,10 @@ specifiers:
   cmdk: 1.0.4
   date-fns: 4.1.0
   embla-carousel-react: 8.5.1
+  framer-motion: ^12.23.0
   input-otp: 1.4.1
   lucide-react: ^0.454.0
+  motion: ^12.23.0
   next: 15.2.4
   next-auth: latest
   next-themes: latest
@@ -54,6 +56,7 @@ specifiers:
   react-day-picker: 8.10.1
   react-dom: ^19
   react-dropzone: latest
+  react-github-calendar: ^4.5.9
   react-hook-form: ^7.54.1
   react-resizable-panels: ^2.1.7
   recharts: 2.15.0
@@ -104,8 +107,10 @@ dependencies:
   cmdk: 1.0.4_supdkcrbntv5z6xiacrz5nyyki
   date-fns: 4.1.0
   embla-carousel-react: 8.5.1_react@19.1.0
+  framer-motion: 12.23.0_j6k6oay3ugsr56slyfvma2drry
   input-otp: 1.4.1_j6k6oay3ugsr56slyfvma2drry
   lucide-react: 0.454.0_react@19.1.0
+  motion: 12.23.0_j6k6oay3ugsr56slyfvma2drry
   next: 15.2.4_j6k6oay3ugsr56slyfvma2drry
   next-auth: 4.24.11_unda6c775ryhpx23nlzbzmlpc4
   next-themes: 0.4.6_j6k6oay3ugsr56slyfvma2drry
@@ -115,6 +120,7 @@ dependencies:
   react-day-picker: 8.10.1_azwu7r6w53kir3xxtk6jezvccy
   react-dom: 19.1.0_react@19.1.0
   react-dropzone: 14.3.8_react@19.1.0
+  react-github-calendar: 4.5.9_react@19.1.0
   react-hook-form: 7.59.0_react@19.1.0
   react-resizable-panels: 2.1.9_j6k6oay3ugsr56slyfvma2drry
   recharts: 2.15.0_j6k6oay3ugsr56slyfvma2drry
@@ -2512,6 +2518,27 @@ packages:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
     dev: false
 
+  /framer-motion/12.23.0_j6k6oay3ugsr56slyfvma2drry:
+    resolution: {integrity: sha512-xf6NxTGAyf7zR4r2KlnhFmsRfKIbjqeBupEDBAaEtVIBJX96sAon00kMlsKButSIRwPSHjbRrAPnYdJJ9kyhbA==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+    dependencies:
+      motion-dom: 12.22.0
+      motion-utils: 12.19.0
+      react: 19.1.0
+      react-dom: 19.1.0_react@19.1.0
+      tslib: 2.8.1
+    dev: false
+
   /fsevents/2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -2702,6 +2729,36 @@ packages:
   /minipass/7.1.2:
     resolution: {integrity: sha512-qOOzS1cBTWYF4BH8fVePDBOO9iptMnGUEZwNc/cMWnTV2nVLZ7VoNWEPHkYczZA0pdoA7dl6e7FL659nX9S2aw==}
     engines: {node: '>=16 || 14 >=14.17'}
+
+  /motion-dom/12.22.0:
+    resolution: {integrity: sha512-ooH7+/BPw9gOsL9VtPhEJHE2m4ltnhMlcGMhEqA0YGNhKof7jdaszvsyThXI6LVIKshJUZ9/CP6HNqQhJfV7kw==}
+    dependencies:
+      motion-utils: 12.19.0
+    dev: false
+
+  /motion-utils/12.19.0:
+    resolution: {integrity: sha512-BuFTHINYmV07pdWs6lj6aI63vr2N4dg0vR+td0rtrdpWOhBzIkEklZyLcvKBoEtwSqx8Jg06vUB5RS0xDiUybw==}
+    dev: false
+
+  /motion/12.23.0_j6k6oay3ugsr56slyfvma2drry:
+    resolution: {integrity: sha512-PPNwblArRH9GRC4F3KtOTiIaYd+mtp324vYq3HIL+ueseoAVqPRK5TPFTAQBcIprfVd0NWo3DLzZSiyWaYFXXQ==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+    dependencies:
+      framer-motion: 12.23.0_j6k6oay3ugsr56slyfvma2drry
+      react: 19.1.0
+      react-dom: 19.1.0_react@19.1.0
+      tslib: 2.8.1
+    dev: false
 
   /mz/2.7.0:
     resolution: {integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==}
@@ -3013,6 +3070,15 @@ packages:
   /queue-microtask/1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
+  /react-activity-calendar/2.7.13_react@19.1.0:
+    resolution: {integrity: sha512-1ZHVgK8QJxtwG52EmcQrxhUQyN1Bv+819IPTTDAGp7Hme3h9IX2thDZJG+KnVbNQ3cjh8DQdfX4wWsTHIw75ug==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+    dependencies:
+      date-fns: 4.1.0
+      react: 19.1.0
+    dev: false
+
   /react-day-picker/8.10.1_azwu7r6w53kir3xxtk6jezvccy:
     resolution: {integrity: sha512-TMx7fNbhLk15eqcMt+7Z7S2KF7mfTId/XJDjKE8f+IUcFn0l08/kI4FiYTL/0yuOLmEcbR4Fwe3GJf/NiiMnPA==}
     peerDependencies:
@@ -3042,6 +3108,15 @@ packages:
       file-selector: 2.1.2
       prop-types: 15.8.1
       react: 19.1.0
+    dev: false
+
+  /react-github-calendar/4.5.9_react@19.1.0:
+    resolution: {integrity: sha512-5Ks2vGbR4KieM0vO49hJKy6hLKpFo7kbtOg+Z67qz83VeJy094okTGLt9+k2oryN5PKfjn5sJr0UObXSvNgcNw==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+    dependencies:
+      react: 19.1.0
+      react-activity-calendar: 2.7.13_react@19.1.0
     dev: false
 
   /react-hook-form/7.59.0_react@19.1.0:
