@@ -74,7 +74,7 @@ export function HeroSectionOne() {
             className="mt-20 mx-auto max-w-6xl overflow-hidden rounded-3xl border border-neutral-200 bg-neutral-100 shadow-[0_0_25px_#00FFFF] dark:border-neutral-800 dark:bg-neutral-900"
           >
             <img
-              src="/coomingsoon.png"
+              src="https://cdn.dribbble.com/userupload/15724364/file/original-87c08a991dac0b591cb152374e6b92b1.jpg?resize=1200x780&vertical=center"
               alt="Landing preview"
               className="aspect-video w-full object-cover"
             />
