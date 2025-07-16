@@ -57,7 +57,10 @@ export function DashboardContent({ user }: DashboardContentProps) {
               <AvatarImage src={user.image || ""} />
               <AvatarFallback>{user.name?.charAt(0) || "U"}</AvatarFallback>
             </Avatar>
-            <Button variant="ghost" onClick={() => signOut()}>
+            <Button
+              variant="ghost"
+              onClick={() => signOut({ callbackUrl: "/" })} // Redirect to home after logout
+            >
               Sign Out
             </Button>
           </div>

@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { userId: string } }
 ) {
-  const { userId } = params;
+  const { userId } = await params;
   const resume = await prisma.resume.findFirst({ where: { userId } });
   const user = await prisma.user.findUnique({ where: { id: userId } });
   const template = await prisma.portfolio.findUnique({

@@ -30,7 +30,8 @@ export default async function RootLayout({
   children: ReactNode;
   params: { userId: string };
 }) {
-  const userData = await getUserData(params.userId);
+  const { userId } = await params;
+  const userData = await getUserData(userId);
   return (
     <html lang="en" className={inter.className}>
       <body className="bg-white text-gray-900 antialiased">
