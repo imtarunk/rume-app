@@ -39,6 +39,7 @@ export default async function PortfolioPage({ params, searchParams }: {
         .from('resumes')
         .select('content, template_id')
         .eq('id', id)
+        .eq('is_published', true)
         .single()
 
     if (error || !resume) {

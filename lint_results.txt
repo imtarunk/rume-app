@@ -1,0 +1,118 @@
+
+> rume_v2@0.1.0 lint /Users/tarunksaini/projects/rume_v2
+> eslint
+
+
+/Users/tarunksaini/projects/rume_v2/debug-gemini.js
+  2:1   error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  3:32  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/Users/tarunksaini/projects/rume_v2/debug-pdf.js
+  2:22  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/Users/tarunksaini/projects/rume_v2/list-models.js
+   2:1   error    A `require()` style import is forbidden     @typescript-eslint/no-require-imports
+   3:32  error    A `require()` style import is forbidden     @typescript-eslint/no-require-imports
+  12:11  warning  'genAI' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/tarunksaini/projects/rume_v2/patch-pdf-parse.js
+  2:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  3:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/Users/tarunksaini/projects/rume_v2/src/app/actions.ts
+  180:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  197:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  219:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  235:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/tarunksaini/projects/rume_v2/src/app/api/webhooks/stripe/route.ts
+  18:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/tarunksaini/projects/rume_v2/src/app/page.tsx
+   5:10  warning  'Icons' is defined but never used         @typescript-eslint/no-unused-vars
+  33:47  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  81:49  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/tarunksaini/projects/rume_v2/src/app/portfolio/[id]/page.tsx
+  6:22  warning  'validateAndFillDefaults' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/tarunksaini/projects/rume_v2/src/app/preview/[id]/page.tsx
+  5:10  warning  'ResumeData' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/tarunksaini/projects/rume_v2/src/components/features/auth/user-menu.tsx
+   5:10  warning  'Button' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   6:10  warning  'Icons' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  10:10  warning  'User' is defined but never used                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  13:67  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  47:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/tarunksaini/projects/rume_v2/src/components/features/portfolio-preview.tsx
+    8:5   warning  'Settings' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+    8:15  warning  'Share2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+    9:46  warning  'History' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+    9:60  warning  'ArrowUpRight' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   37:26  warning  'setShowSettings' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   44:23  warning  'setIsPremium' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   63:26  error    Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+/Users/tarunksaini/projects/rume_v2/src/components/features/portfolio-preview.tsx:63:26
+  61 |             try {
+  62 |                 const { url } = await createCheckoutSession(templateId, resumeId)
+> 63 |                 if (url) window.location.href = url
+     |                          ^^^^^^^^^^^^^^^ value cannot be modified
+  64 |             } catch (error) {
+  65 |                 console.error("Payment error:", error)
+  66 |                 alert("Failed to initiate payment. Please try again.")  react-hooks/immutability
+  100:39  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-explicit-any
+
+/Users/tarunksaini/projects/rume_v2/src/components/features/uploader.tsx
+  60:18  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/tarunksaini/projects/rume_v2/src/components/templates/template-1.tsx
+  5:10   warning  'Button' is defined but never used          @typescript-eslint/no-unused-vars
+  9:52   warning  'phone' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  9:149  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+/Users/tarunksaini/projects/rume_v2/src/components/templates/template-2.tsx
+   9:52   warning  'phone' is assigned a value but never used                       @typescript-eslint/no-unused-vars
+   9:64   warning  'location' is assigned a value but never used                    @typescript-eslint/no-unused-vars
+   9:97   warning  'portfolioUrl' is assigned a value but never used                @typescript-eslint/no-unused-vars
+   9:149  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  21:124  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/tarunksaini/projects/rume_v2/src/components/ui/icons.tsx
+  23:5  warning  'Twitter' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/tarunksaini/projects/rume_v2/src/components/ui/input.tsx
+  4:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/tarunksaini/projects/rume_v2/src/components/ui/the-infinite-grid.tsx
+   4:17  warning  'useState' is defined but never used      @typescript-eslint/no-unused-vars
+  71:55  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  71:69  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/tarunksaini/projects/rume_v2/src/lib/gemini.ts
+  146:47  error  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  153:9   error  'certifications' is never reassigned. Use 'const' instead  prefer-const
+  189:52  error  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  201:40  error  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  211:41  error  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+
+/Users/tarunksaini/projects/rume_v2/src/lib/stripe.ts
+  4:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/tarunksaini/projects/rume_v2/src/lib/supabase/middleware.ts
+  21:58  warning  'options' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/tarunksaini/projects/rume_v2/src/lib/supabase/server.ts
+  19:30  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  28:30  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 56 problems (31 errors, 25 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+
+ ELIFECYCLE  Command failed with exit code 1.

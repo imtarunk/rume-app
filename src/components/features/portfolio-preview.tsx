@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Script from 'next/script'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Settings, Share2, ChevronLeft, ExternalLink, Layout, FileText,
@@ -13,7 +14,7 @@ import { ResumeData } from '@/lib/gemini'
 import { Template1 } from '@/components/templates/template-1'
 import { Template2 } from '@/components/templates/template-2'
 import { Button } from '@/components/ui/button'
-import { updateResumeTemplate, updateResumeSettings, updateResumeData, createCheckoutSession } from '@/app/actions'
+import { updateResumeTemplate, updateResumeSettings, updateResumeData, createRazorpayOrder } from '@/app/actions'
 import { cn } from '@/lib/utils'
 
 interface PortfolioPreviewProps {
@@ -57,10 +58,37 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
 
     const handleTemplateChange = async (templateId: string) => {
         if (!isTemplateUnlocked(templateId)) {
-            // Trigger Stripe Payment
+            // Trigger Razorpay Payment
             try {
-                const { url } = await createCheckoutSession(templateId, resumeId)
-                if (url) window.location.href = url
+                const orderData = await createRazorpayOrder(templateId, resumeId)
+
+                const options = {
+                    key: orderData.key,
+                    amount: orderData.amount,
+                    currency: "INR",
+                    name: "Rume",
+                    description: "Unlock Premium Template",
+                    order_id: orderData.orderId,
+                    handler: async function (response: any) {
+                        // After successful payment, update the state and template
+                        setIsPremium(true)
+                        setSelectedTemplate(templateId)
+                        await updateResumeTemplate(resumeId, templateId)
+
+                        // Note: Webhook will handle terminal database update for reliability
+                        alert("Payment successful! Template unlocked.")
+                    },
+                    prefill: {
+                        name: orderData.user.name,
+                        email: orderData.user.email,
+                    },
+                    theme: {
+                        color: "#f97316",
+                    },
+                };
+
+                const rzp = new (window as any).Razorpay(options);
+                rzp.open();
             } catch (error) {
                 console.error("Payment error:", error)
                 alert("Failed to initiate payment. Please try again.")
@@ -112,6 +140,10 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
 
     return (
         <div className="flex flex-col h-screen bg-background font-sans overflow-hidden text-foreground">
+            <Script
+                id="razorpay-checkout-js"
+                src="https://checkout.razorpay.com/v1/checkout.js"
+            />
             {/* Top Bar */}
             <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 z-50 bg-background/80 backdrop-blur-md sticky top-0">
                 <div className="flex items-center gap-4">

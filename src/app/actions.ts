@@ -85,6 +85,19 @@ export async function updateResumeTemplate(resumeId: string, templateId: string)
         return { error: 'Unauthorized' }
     }
 
+    // Check if user is trying to select a paid template
+    if (templateId !== 'template-1') {
+        const { data: purchase } = await supabase
+            .from('premium_access')
+            .select('id')
+            .eq('user_id', user.id)
+            .single()
+
+        if (!purchase) {
+            return { error: 'Premium access required for this template' }
+        }
+    }
+
     const { error } = await supabase
         .from('resumes')
         .update({ template_id: templateId })
@@ -101,10 +114,9 @@ export async function updateResumeTemplate(resumeId: string, templateId: string)
     return { success: true }
 }
 
-import { stripe } from '@/lib/stripe'
-import { headers } from 'next/headers'
+import { razorpay } from '@/lib/razorpay'
 
-export async function createCheckoutSession(templateId: string, resumeId: string) {
+export async function createRazorpayOrder(templateId: string, resumeId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -112,37 +124,34 @@ export async function createCheckoutSession(templateId: string, resumeId: string
         throw new Error('Unauthorized')
     }
 
-    const price = 99; // ₹99
+    const amount = 99; // ₹99
 
-    const headersList = await headers()
-    const origin = headersList.get('origin') || 'http://localhost:3000'
-
-    const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-            {
-                price_data: {
-                    currency: 'inr',
-                    product_data: {
-                        name: `Rume Premium Upgrade`,
-                        description: 'Unlock all current and future premium templates forever.',
-                    },
-                    unit_amount: price * 100, // Amount in cents/paise
-                },
-                quantity: 1,
-            },
-        ],
-        mode: 'payment',
-        success_url: `${origin}/preview/${resumeId}?payment=success`,
-        cancel_url: `${origin}/preview/${resumeId}?payment=cancel`,
-        customer_email: user.email,
-        metadata: {
+    const options = {
+        amount: amount * 100, // Amount in paise
+        currency: "INR",
+        receipt: `receipt_${resumeId}`,
+        notes: {
             userId: user.id,
-            resumeId: resumeId
+            resumeId: resumeId,
+            templateId: templateId
         }
-    })
+    };
 
-    return { sessionId: session.id, url: session.url }
+    try {
+        const order = await razorpay.orders.create(options);
+        return {
+            orderId: order.id,
+            amount: order.amount,
+            key: process.env.RAZORPAY_KEY_ID,
+            user: {
+                name: user.email?.split('@')[0] || 'User',
+                email: user.email,
+            }
+        }
+    } catch (error) {
+        console.error('Razorpay order creation failed:', error);
+        throw new Error('Failed to create payment order');
+    }
 }
 
 export async function updateResumeSettings(resumeId: string, settings: { is_published?: boolean, subdomain?: string }) {
@@ -182,36 +191,7 @@ export async function updateResumeSettings(resumeId: string, settings: { is_publ
         }
     }
 
-    // 2. Enforce one active portfolio rule
-    if (settings.is_published === true) {
-        // Unpublish all other resumes for this user
-        const { data: otherResumes } = await supabase
-            .from('resumes')
-            .select('id, content')
-            .eq('user_id', user.id)
-            .neq('id', resumeId)
-
-        if (otherResumes) {
-            for (const other of otherResumes) {
-                const otherContent = {
-                    ...other.content as any,
-                    settings: {
-                        ...(other.content as any).settings,
-                        is_published: false
-                    }
-                }
-                await supabase
-                    .from('resumes')
-                    .update({
-                        is_published: false,
-                        content: otherContent
-                    })
-                    .eq('id', other.id)
-            }
-        }
-    }
-
-    // 3. Update current resume
+    // 3. Update current resume (Trigger will handle unpublishing others if is_published is true)
     const { error } = await supabase
         .from('resumes')
         .update({
