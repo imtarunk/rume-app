@@ -24,6 +24,10 @@ import {
     User,
     X,
     Upload,
+    Star,
+    Linkedin,
+    ArrowUpRight,
+    Mail,
     type LucideProps,
 } from "lucide-react"
 
@@ -53,6 +57,10 @@ export const Icons = {
     laptop: Laptop,
     check: Check,
     upload: Upload,
+    star: Star,
+    linkedin: Linkedin,
+    arrowUpRight: ArrowUpRight,
+    mail: Mail,
     google: ({ ...props }: React.SVGProps<SVGSVGElement>) => (
         <svg
             aria-hidden="true"

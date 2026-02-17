@@ -242,3 +242,108 @@ export async function updateResumeData(resumeId: string, content: any) {
     revalidatePath(`/portfolio/${resumeId}`)
     return { success: true }
 }
+
+export async function uploadImage(formData: FormData, resumeId: string, imageType: 'profile' | 'project', projectIndex?: number) {
+    const file = formData.get('image') as File
+
+    if (!file) {
+        return { error: 'No file uploaded' }
+    }
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Unauthorized' }
+    }
+
+    try {
+        // Upload to Supabase Storage
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${user.id}/${resumeId}/${imageType}-${imageType === 'project' ? projectIndex : 'main'}-${Date.now()}.${fileExt}`
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('portfolio-images')
+            .upload(fileName, file, {
+                upsert: true,
+                contentType: file.type
+            })
+
+        if (uploadError) {
+            console.error('Upload error:', uploadError)
+            return { error: 'Failed to upload image' }
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from('portfolio-images')
+            .getPublicUrl(fileName)
+
+        // Update resume data with image URL
+        const { data: resume } = await supabase
+            .from('resumes')
+            .select('content')
+            .eq('id', resumeId)
+            .eq('user_id', user.id)
+            .single()
+
+        if (!resume) {
+            return { error: 'Resume not found' }
+        }
+
+        const updatedContent = { ...resume.content } as any
+
+        if (imageType === 'profile') {
+            updatedContent.personalInfo.profileImageUrl = publicUrl
+        } else if (imageType === 'project' && projectIndex !== undefined) {
+            if (updatedContent.projects[projectIndex]) {
+                updatedContent.projects[projectIndex].imageUrl = publicUrl
+            }
+        }
+
+        const { error: updateError } = await supabase
+            .from('resumes')
+            .update({ content: updatedContent })
+            .eq('id', resumeId)
+            .eq('user_id', user.id)
+
+        if (updateError) {
+            return { error: 'Failed to update resume with image URL' }
+        }
+
+        revalidatePath(`/preview/${resumeId}`)
+        revalidatePath(`/portfolio/${resumeId}`)
+
+        return { success: true, imageUrl: publicUrl }
+    } catch (error) {
+        console.error('Image upload error:', error)
+        return { error: 'Failed to process image upload' }
+    }
+}
+
+export async function getResumeFile(resumeId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Unauthorized' }
+    }
+
+    const { data: resume } = await supabase
+        .from('resumes')
+        .select('file_name, content')
+        .eq('id', resumeId)
+        .eq('user_id', user.id)
+        .single()
+
+    if (!resume) {
+        return { error: 'Resume not found' }
+    }
+
+    return {
+        success: true,
+        fileName: resume.file_name,
+        // Return the resume data so it can be converted back to a downloadable format
+        data: resume.content
+    }
+}

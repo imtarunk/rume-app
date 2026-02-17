@@ -1,20 +1,21 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Script from 'next/script'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Settings, Share2, ChevronLeft, ExternalLink, Layout, FileText,
-    Save, Check, Globe, Monitor, Smartphone, History, Zap, ArrowUpRight, Lock, Copy
+    Save, Check, Globe, Monitor, Smartphone, History, Zap, ArrowUpRight, Lock, Copy, Upload
 } from 'lucide-react'
 
 import { ResumeData } from '@/lib/gemini'
 import { Template1 } from '@/components/templates/template-1'
 import { Template2 } from '@/components/templates/template-2'
+import { Template3 } from '@/components/templates/template-3'
 import { Button } from '@/components/ui/button'
-import { updateResumeTemplate, updateResumeSettings, updateResumeData, createRazorpayOrder } from '@/app/actions'
+import { updateResumeTemplate, updateResumeSettings, updateResumeData, createRazorpayOrder, uploadImage } from '@/app/actions'
 import { cn } from '@/lib/utils'
 
 interface PortfolioPreviewProps {
@@ -27,7 +28,8 @@ interface PortfolioPreviewProps {
 
 const TEMPLATES = [
     { id: 'template-1', name: 'Executive', description: 'Clean, professional, and impactful', color: 'bg-blue-600', isFree: true },
-    { id: 'template-2', name: 'Creative', description: 'Bold, modern, and high-energy', color: 'bg-orange-600', isFree: false, price: 'Premium' }
+    { id: 'template-2', name: 'Creative', description: 'Bold, modern, and high-energy', color: 'bg-orange-600', isFree: false, price: 'Premium' },
+    { id: 'template-3', name: 'Bento', description: 'Sophisticated grid-based design', color: 'bg-[#D85828]', isFree: false, price: 'Premium' }
 ]
 
 export function PortfolioPreview({ data: initialData, resumeId, initialTemplate, fileName, hasFullAccess = false }: PortfolioPreviewProps) {
@@ -47,8 +49,13 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
 
     const [editSummary, setEditSummary] = useState(data.personalInfo.summary)
     const [isCopied, setIsCopied] = useState(false)
+    const [mounted, setMounted] = useState(false)
 
-    const publishedUrl = isPublished
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    const publishedUrl = mounted && isPublished
         ? `${window.location.origin}/portfolio/${resumeId}${subdomain ? `?s=${subdomain}` : ''}`
         : null
 
@@ -175,7 +182,11 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
         }
     }
 
-    const TemplateComponent = selectedTemplate === 'template-2' ? Template2 : Template1
+    const TemplateComponent = (({
+        'template-1': Template1,
+        'template-2': Template2,
+        'template-3': Template3,
+    } as Record<string, any>)[selectedTemplate]) || Template1
 
     return (
         <div className="flex flex-col h-screen bg-background font-sans overflow-hidden text-foreground">
@@ -333,11 +344,11 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Layout Engine</h4>
                                             <div className="grid gap-4">
                                                 {TEMPLATES.map((tmpl) => (
-                                                    <button
+                                                    <div
                                                         key={tmpl.id}
                                                         onClick={() => handleTemplateChange(tmpl.id)}
                                                         className={cn(
-                                                            "w-full p-4 rounded-2xl border-2 text-left transition-all group",
+                                                            "w-full p-4 rounded-2xl border-2 text-left transition-all group cursor-pointer",
                                                             selectedTemplate === tmpl.id
                                                                 ? "border-orange-500 bg-orange-500/10"
                                                                 : "border-white/5 hover:border-white/10 hover:bg-white/5"
@@ -371,10 +382,138 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                                 </Button>
                                                             </div>
                                                         )}
-                                                    </button>
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
+
+                                        {selectedTemplate === 'template-3' && (
+                                            <>
+                                                <div className="h-px bg-white/5" />
+                                                <div className="space-y-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Template Images</h4>
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 bg-orange-500/10 text-orange-500 rounded-full border border-orange-500/20">Bento Style</span>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-bold text-foreground">Profile Photo</label>
+                                                            <div className="relative group">
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    id="profile-image-upload"
+                                                                    className="hidden"
+                                                                    onChange={async (e) => {
+                                                                        const file = e.target.files?.[0]
+                                                                        if (!file) return
+
+                                                                        const formData = new FormData()
+                                                                        formData.append('image', file)
+
+                                                                        setIsSaving(true)
+                                                                        try {
+                                                                            const result = await uploadImage(formData, resumeId, 'profile')
+                                                                            if (result.success && result.imageUrl) {
+                                                                                const updatedData = { ...data }
+                                                                                if (!updatedData.personalInfo) updatedData.personalInfo = {} as any
+                                                                                (updatedData.personalInfo as any).profileImageUrl = result.imageUrl
+                                                                                setData(updatedData)
+                                                                            } else {
+                                                                                alert(result.error || 'Upload failed')
+                                                                            }
+                                                                        } catch (err) {
+                                                                            alert('An error occurred during upload')
+                                                                        } finally {
+                                                                            setIsSaving(false)
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                {(data.personalInfo as any)?.profileImageUrl ? (
+                                                                    <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-white/10 group/img">
+                                                                        <img
+                                                                            src={(data.personalInfo as any).profileImageUrl}
+                                                                            alt="Profile"
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                        <label
+                                                                            htmlFor="profile-image-upload"
+                                                                            className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer flex flex-col items-center justify-center text-white"
+                                                                        >
+                                                                            <Upload className="w-6 h-6 mb-2" />
+                                                                            <span className="text-[10px] font-black uppercase tracking-widest">Change Photo</span>
+                                                                        </label>
+                                                                    </div>
+                                                                ) : (
+                                                                    <label
+                                                                        htmlFor="profile-image-upload"
+                                                                        className="w-full aspect-[3/4] border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center text-muted-foreground hover:border-orange-500/50 hover:bg-white/5 transition-all cursor-pointer group/upload"
+                                                                    >
+                                                                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover/upload:scale-110 transition-transform">
+                                                                            <Upload className="w-6 h-6" />
+                                                                        </div>
+                                                                        <p className="text-xs font-black uppercase tracking-[0.1em]">Upload Photo</p>
+                                                                        <p className="text-[10px] mt-1 opacity-50 font-bold uppercase tracking-widest">Square or Portrait</p>
+                                                                    </label>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Project Visuals */}
+                                                        <div className="space-y-4 pt-4 border-t border-white/5">
+                                                            <div className="flex items-center justify-between">
+                                                                <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Project Visuals</h5>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-3">
+                                                                {data.projects.slice(0, 4).map((project, idx) => (
+                                                                    <div key={idx} className="space-y-1.5">
+                                                                        <label className="text-[9px] font-black uppercase text-muted-foreground truncate block px-1">{project.name || `Project ${idx + 1}`}</label>
+                                                                        <div className="relative aspect-video rounded-xl border border-white/5 bg-white/5 overflow-hidden group/project">
+                                                                            <input
+                                                                                type="file"
+                                                                                accept="image/*"
+                                                                                id={`project-image-${idx}`}
+                                                                                className="hidden"
+                                                                                onChange={async (e) => {
+                                                                                    const file = e.target.files?.[0]
+                                                                                    if (!file) return
+                                                                                    const formData = new FormData()
+                                                                                    formData.append('image', file)
+                                                                                    setIsSaving(true)
+                                                                                    try {
+                                                                                        const result = await uploadImage(formData, resumeId, 'project', idx)
+                                                                                        if (result.success && result.imageUrl) {
+                                                                                            const updatedData = { ...data }
+                                                                                            updatedData.projects[idx].imageUrl = result.imageUrl
+                                                                                            setData(updatedData)
+                                                                                        }
+                                                                                    } catch (err) {
+                                                                                        console.error('Project image upload failed')
+                                                                                    } finally {
+                                                                                        setIsSaving(false)
+                                                                                    }
+                                                                                }}
+                                                                            />
+                                                                            {project.imageUrl ? (
+                                                                                <img src={project.imageUrl} className="w-full h-full object-cover" alt="" />
+                                                                            ) : (
+                                                                                <div className="w-full h-full flex items-center justify-center opacity-10">
+                                                                                    <Layout className="w-5 h-5" />
+                                                                                </div>
+                                                                            )}
+                                                                            <label htmlFor={`project-image-${idx}`} className="absolute inset-0 bg-black/60 opacity-0 group-hover/project:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
+                                                                                <Upload className="w-4 h-4 text-white" />
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
 
                                         <div className="h-px bg-white/5" />
 
@@ -535,7 +674,7 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                         </div>
                                     </div>
                                 )}
-                                <TemplateComponent data={data} />
+                                <TemplateComponent data={data} resumeId={resumeId} fileName={fileName} />
                             </div>
                         </motion.div>
                     ) : (

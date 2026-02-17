@@ -18,6 +18,7 @@ export interface ResumeData {
         linkedinUrl: string
         portfolioUrl: string
         summary: string
+        profileImageUrl?: string
     }
     workExperience: {
         company: string
@@ -43,6 +44,7 @@ export interface ResumeData {
         description: string
         technologies: string[]
         link: string
+        imageUrl?: string
     }[]
     certifications: {
         name: string
@@ -210,7 +212,8 @@ export function validateAndFillDefaults(data: any): ResumeData {
             name: proj.name || proj.title || "",
             description: Array.isArray(proj.description) ? proj.description.join('. ') : (proj.description || ""),
             technologies: Array.isArray(proj.technologies) ? proj.technologies : [],
-            link: proj.link || ""
+            link: proj.link || "",
+            imageUrl: proj.imageUrl || ""
         }))
     }
 
@@ -237,11 +240,15 @@ export function validateAndFillDefaults(data: any): ResumeData {
             linkedinUrl: personalInfo.linkedinUrl || "",
             portfolioUrl: personalInfo.portfolioUrl || "",
             summary: personalInfo.summary || "",
+            profileImageUrl: personalInfo.profileImageUrl || "",
         },
         workExperience: Array.isArray(workExperience) ? workExperience : [],
         education: Array.isArray(education) ? education : [],
         skills: Array.isArray(skills) ? skills : [],
-        projects: Array.isArray(projects) ? projects : [],
+        projects: Array.isArray(projects) ? projects.map((p: any) => ({
+            ...p,
+            imageUrl: p.imageUrl || ""
+        })) : [],
         certifications: Array.isArray(certifications) ? certifications : [],
         settings: data?.settings || {},
     }

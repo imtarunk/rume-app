@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Globe, Layout, Save, Check, Ban, ExternalLink, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { updateResumeSettings } from '@/app/actions'
@@ -36,7 +36,13 @@ export function UserPortfolioConfig({ resume, hasFullAccess }: UserPortfolioConf
         setIsSaving(false)
     }
 
-    const liveUrl = isPublished
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    const liveUrl = mounted && isPublished
         ? `${window.location.origin}/portfolio/${resume.id}${subdomain ? `?s=${subdomain}` : ''}`
         : null
 

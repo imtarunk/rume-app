@@ -4,7 +4,7 @@ import { Container } from '@/components/ui/container'
 import { Icons } from '@/components/ui/icons'
 import { Button } from '@/components/ui/button'
 
-export function Template2({ data }: { data: ResumeData }) {
+export function Template2({ data, resumeId, fileName }: { data: ResumeData, resumeId?: string, fileName?: string }) {
     const { personalInfo = {}, workExperience = [], education = [], skills = [], projects = [] } = data || {}
     const { fullName = '', title = '', email = '', phone = '', location = '', linkedinUrl = '', portfolioUrl = '', summary = '' } = personalInfo as any
 

@@ -11,6 +11,7 @@ import { TheInfiniteGrid } from '@/components/ui/the-infinite-grid'
 import { ArrowRight, Sparkles, Zap, Shield, Globe, Upload, Layout, Lock } from 'lucide-react'
 import { Template1 } from '@/components/templates/template-1'
 import { Template2 } from '@/components/templates/template-2'
+import { Template3 } from '@/components/templates/template-3'
 import { cn } from '@/lib/utils'
 import { PricingManager } from '@/components/features/pricing-manager'
 import { TemplateCard } from '@/components/features/template-card'
@@ -300,7 +301,7 @@ export default async function Home(props: { searchParams: Promise<{ new?: string
               {[
                 { name: 'Executive', desc: 'Minimalist, powerful, and ultra-professional.', color: 'from-slate-900 to-slate-800', isFree: true, id: 'template-1', tag: 'Classic' },
                 { name: 'Creative', desc: 'Bold gradients and high-impact layouts.', color: 'from-orange-600/20 to-amber-600/20', isFree: false, id: 'template-2', tag: 'Bold' },
-                { name: 'Modernist', desc: 'Clean lines with focus on whitespace.', color: 'from-blue-600/20 to-indigo-600/20', isFree: false, id: 'template-1', tag: 'Modern' }
+                { name: 'Bento', desc: 'Sophisticated grid-based design.', color: 'from-orange-600/20 to-amber-600/20', isFree: false, id: 'template-3', tag: 'Modern' }
               ].map((tmpl, i) => (
                 <TemplateCard key={i} className="group relative flex flex-col h-full active:scale-95 transition-all">
                   <div className="absolute -inset-1 rounded-[3rem] bg-gradient-to-b from-white/10 to-transparent blur-xl transition-opacity opacity-0 group-hover:opacity-100" />
@@ -315,7 +316,9 @@ export default async function Home(props: { searchParams: Promise<{ new?: string
                         </div>
                         <div className="absolute inset-0 top-6 scale-[0.4] origin-top-left h-[250%] w-[250%] bg-white group-hover:scale-[0.42] transition-all duration-1000 pointer-events-none overflow-hidden">
                           <div className="text-black transform-gpu p-10">
-                            {tmpl.id === 'template-2' ? <Template2 data={MOCK_DATA as any} /> : <Template1 data={MOCK_DATA as any} />}
+                            {tmpl.id === 'template-1' && <Template1 data={MOCK_DATA as any} />}
+                            {tmpl.id === 'template-2' && <Template2 data={MOCK_DATA as any} />}
+                            {tmpl.id === 'template-3' && <Template3 data={MOCK_DATA as any} />}
                           </div>
                         </div>
                       </div>
