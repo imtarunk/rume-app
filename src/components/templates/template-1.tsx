@@ -76,7 +76,7 @@ export function Template1({ data }: { data: ResumeData }) {
                                         </div>
                                         <p className="text-base sm:text-lg text-gray-700 font-medium">{job.company}</p>
                                         <ul className="list-disc list-outside ml-4 space-y-2 text-sm sm:text-base text-gray-600 mt-4 leading-relaxed marker:text-gray-300">
-                                            {job.description?.map((desc, j) => (
+                                            {job.description?.map?.((desc, j) => (
                                                 <li key={j}>{desc}</li>
                                             ))}
                                         </ul>
@@ -166,7 +166,7 @@ export function Template1({ data }: { data: ResumeData }) {
                                             {skillGroup.category}
                                         </h3>
                                         <div className="flex flex-wrap gap-2">
-                                            {skillGroup.items.map((item, j) => (
+                                            {skillGroup.items?.map?.((item, j) => (
                                                 <span key={j} className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs sm:text-sm font-semibold text-gray-700">
                                                     {item}
                                                 </span>

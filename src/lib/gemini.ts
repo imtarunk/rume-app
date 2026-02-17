@@ -175,13 +175,21 @@ export function validateAndFillDefaults(data: any): ResumeData {
         }
     }
 
-    // B) Skills Mapping (Object to Array)
-    if (data?.skills && !Array.isArray(data.skills) && typeof data.skills === 'object') {
-        // Convert object { tools: [], languages: [] } to [{ category: 'tools', items: [] }]
-        skills = Object.entries(data.skills).map(([category, items]) => ({
-            category: category.charAt(0).toUpperCase() + category.slice(1), // Capitalize
-            items: Array.isArray(items) ? items : [String(items)]
-        }))
+    // B) Skills Mapping (Object or flat array to expected grouped format)
+    if (data?.skills) {
+        if (!Array.isArray(data.skills) && typeof data.skills === 'object') {
+            // Convert object { tools: [], languages: [] } to [{ category: 'tools', items: [] }]
+            skills = Object.entries(data.skills).map(([category, items]) => ({
+                category: category.charAt(0).toUpperCase() + category.slice(1), // Capitalize
+                items: Array.isArray(items) ? items : [String(items)]
+            }))
+        } else if (Array.isArray(data.skills) && data.skills.length > 0 && typeof data.skills[0] === 'string') {
+            // Convert flat string array ["React", "CSS"] to [{ category: 'Skills', items: ["React", "CSS"] }]
+            skills = [{
+                category: "Skills",
+                items: data.skills
+            }]
+        }
     }
 
     // C) Work Experience Mapping (experience -> workExperience)

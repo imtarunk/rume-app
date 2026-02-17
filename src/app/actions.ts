@@ -85,7 +85,7 @@ export async function updateResumeTemplate(resumeId: string, templateId: string)
         return { error: 'Unauthorized' }
     }
 
-    // Check if user is trying to select a paid template
+    // Strict Enforcement: Check if user is trying to select a paid template without purchase
     if (templateId !== 'template-1') {
         const { data: purchase } = await supabase
             .from('premium_access')
@@ -94,7 +94,7 @@ export async function updateResumeTemplate(resumeId: string, templateId: string)
             .single()
 
         if (!purchase) {
-            return { error: 'Premium access required for this template' }
+            return { error: 'Premium purchase required for this template' }
         }
     }
 
@@ -129,7 +129,7 @@ export async function createRazorpayOrder(templateId: string, resumeId: string) 
     const options = {
         amount: amount * 100, // Amount in paise
         currency: "INR",
-        receipt: `receipt_${resumeId}`,
+        receipt: `r_${resumeId}`,
         notes: {
             userId: user.id,
             resumeId: resumeId,
@@ -179,8 +179,17 @@ export async function updateResumeSettings(resumeId: string, settings: { is_publ
             .single()
 
         if (!purchase) {
-            return { error: 'Premium subscription required' }
+            return { error: 'Premium purchase required to publish this template' }
         }
+    }
+
+    // Strict Enforcement: If is_published is true, ensure all other portfolios for this user are unpublished
+    if (settings.is_published) {
+        await supabase
+            .from('resumes')
+            .update({ is_published: false })
+            .eq('user_id', user.id)
+            .neq('id', resumeId)
     }
 
     const updatedContent = {

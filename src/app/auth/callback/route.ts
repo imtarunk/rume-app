@@ -12,15 +12,26 @@ export async function GET(request: NextRequest) {
         const supabase = await createClient()
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
-            const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
+            const { data: { user } } = await supabase.auth.getUser()
+            let finalNext = next
+            if (user) {
+                const createdAt = new Date(user.created_at).getTime()
+                const now = new Date().getTime()
+                // If user was created in the last 30 seconds, it's a new signup
+                if (now - createdAt < 30000) {
+                    finalNext = next === '/' ? '/?new=true' : `${next}${next.includes('?') ? '&' : '?'}new=true`
+                }
+            }
+
+            const forwardedHost = request.headers.get('x-forwarded-host')
             const isLocalEnv = process.env.NODE_ENV === 'development'
+
             if (isLocalEnv) {
-                // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
-                return NextResponse.redirect(`${request.nextUrl.origin}${next}`)
+                return NextResponse.redirect(`${request.nextUrl.origin}${finalNext}`)
             } else if (forwardedHost) {
-                return NextResponse.redirect(`https://${forwardedHost}${next}`)
+                return NextResponse.redirect(`https://${forwardedHost}${finalNext}`)
             } else {
-                return NextResponse.redirect(`${request.nextUrl.origin}${next}`)
+                return NextResponse.redirect(`${request.nextUrl.origin}${finalNext}`)
             }
         }
     }

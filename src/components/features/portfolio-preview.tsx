@@ -7,7 +7,7 @@ import Script from 'next/script'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Settings, Share2, ChevronLeft, ExternalLink, Layout, FileText,
-    Save, Check, Globe, Monitor, Smartphone, History, Zap, ArrowUpRight, Lock
+    Save, Check, Globe, Monitor, Smartphone, History, Zap, ArrowUpRight, Lock, Copy
 } from 'lucide-react'
 
 import { ResumeData } from '@/lib/gemini'
@@ -27,7 +27,7 @@ interface PortfolioPreviewProps {
 
 const TEMPLATES = [
     { id: 'template-1', name: 'Executive', description: 'Clean, professional, and impactful', color: 'bg-blue-600', isFree: true },
-    { id: 'template-2', name: 'Creative', description: 'Bold, modern, and high-energy', color: 'bg-orange-600', isFree: false, price: '₹99' }
+    { id: 'template-2', name: 'Creative', description: 'Bold, modern, and high-energy', color: 'bg-orange-600', isFree: false, price: 'Premium' }
 ]
 
 export function PortfolioPreview({ data: initialData, resumeId, initialTemplate, fileName, hasFullAccess = false }: PortfolioPreviewProps) {
@@ -35,16 +35,18 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
     const [data, setData] = useState(initialData)
     const [selectedTemplate, setSelectedTemplate] = useState(initialTemplate || 'template-1')
     const [isPublishing, setIsPublishing] = useState(false)
-    const [showSettings, setShowSettings] = useState(false)
+    const [showSettings, setShowSettings] = useState(true)
     const [activeTab, setActiveTab] = useState<'design' | 'content'>('design')
     const [subdomain, setSubdomain] = useState(data.settings?.subdomain || '')
     const [isPublished, setIsPublished] = useState(data.settings?.is_published || false)
     const [isSaving, setIsSaving] = useState(false)
     const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop')
+    const [activeMainTab, setActiveMainTab] = useState<'preview' | 'templates'>('preview')
 
     const [isPremium, setIsPremium] = useState(hasFullAccess)
 
     const [editSummary, setEditSummary] = useState(data.personalInfo.summary)
+    const [isCopied, setIsCopied] = useState(false)
 
     const publishedUrl = isPublished
         ? `${window.location.origin}/portfolio/${resumeId}${subdomain ? `?s=${subdomain}` : ''}`
@@ -56,55 +58,92 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
         return isPremium
     }
 
-    const handleTemplateChange = async (templateId: string) => {
-        if (!isTemplateUnlocked(templateId)) {
-            // Trigger Razorpay Payment
-            try {
-                const orderData = await createRazorpayOrder(templateId, resumeId)
+    const copyToClipboard = async () => {
+        if (!publishedUrl) return
+        try {
+            await navigator.clipboard.writeText(publishedUrl)
+            setIsCopied(true)
+            setTimeout(() => setIsCopied(false), 2000)
+        } catch (err) {
+            console.error('Failed to copy: ', err)
+        }
+    }
 
-                const options = {
-                    key: orderData.key,
-                    amount: orderData.amount,
-                    currency: "INR",
-                    name: "Rume",
-                    description: "Unlock Premium Template",
-                    order_id: orderData.orderId,
-                    handler: async function (response: any) {
-                        // After successful payment, update the state and template
-                        setIsPremium(true)
+    const triggerPayment = async (templateId: string, onBlock?: 'select' | 'publish') => {
+        try {
+            const orderData = await createRazorpayOrder(templateId, resumeId)
+
+            const options = {
+                key: orderData.key,
+                amount: orderData.amount,
+                currency: "INR",
+                name: "Rume",
+                description: "Unlock Premium Template",
+                order_id: orderData.orderId,
+                handler: async function (response: any) {
+                    setIsPremium(true)
+
+                    if (onBlock === 'select') {
                         setSelectedTemplate(templateId)
                         await updateResumeTemplate(resumeId, templateId)
-
-                        // Note: Webhook will handle terminal database update for reliability
-                        alert("Payment successful! Template unlocked.")
-                    },
-                    prefill: {
-                        name: orderData.user.name,
-                        email: orderData.user.email,
-                    },
-                    theme: {
-                        color: "#f97316",
-                    },
-                };
-
-                const rzp = new (window as any).Razorpay(options);
-                rzp.open();
-            } catch (error) {
-                console.error("Payment error:", error)
-                alert("Failed to initiate payment. Please try again.")
+                        alert("Payment successful! Template unlocked and selected.")
+                    } else if (onBlock === 'publish') {
+                        // First activate the template
+                        await updateResumeTemplate(resumeId, templateId)
+                        // Then publish
+                        const newStatus = true // Force to published on payment
+                        await updateResumeSettings(resumeId, { is_published: newStatus, subdomain })
+                        setIsPublished(newStatus)
+                        alert("Payment successful! Your premium portfolio is now live.")
+                    } else {
+                        alert("Payment successful! All premium templates are now unlocked.")
+                    }
+                },
+                prefill: {
+                    name: orderData.user.name,
+                    email: orderData.user.email,
+                },
+                theme: { color: "#f97316" },
             }
-            return
-        }
 
+            const rzp = new (window as any).Razorpay(options)
+            rzp.open()
+        } catch (error) {
+            console.error("Payment error:", error)
+            alert("Failed to initiate payment. Please try again.")
+        }
+    }
+
+    const handleTemplateChange = async (templateId: string) => {
         setSelectedTemplate(templateId)
-        await updateResumeTemplate(resumeId, templateId)
+
+        // Only sync to backend if it's already unlocked/free
+        if (isTemplateUnlocked(templateId)) {
+            await updateResumeTemplate(resumeId, templateId)
+        }
     }
 
     const handlePublish = async () => {
+        // If the currently selected template in UI is locked, must unlock first
+        if (!isTemplateUnlocked(selectedTemplate)) {
+            await triggerPayment(selectedTemplate, 'publish')
+            return
+        }
+
         setIsPublishing(true)
         const newStatus = !isPublished
-        await updateResumeSettings(resumeId, { is_published: newStatus, subdomain })
-        setIsPublished(newStatus)
+
+        // Ensure the backend has the correct template ID before publishing
+        await updateResumeTemplate(resumeId, selectedTemplate)
+
+        const result = await updateResumeSettings(resumeId, { is_published: newStatus, subdomain })
+
+        if (result.success) {
+            setIsPublished(newStatus)
+        } else if (result.error) {
+            alert(result.error)
+        }
+
         setIsPublishing(false)
     }
 
@@ -146,14 +185,31 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
             />
             {/* Top Bar */}
             <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 z-50 bg-background/80 backdrop-blur-md sticky top-0">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="rounded-xl hover:bg-white/5">
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="rounded-xl hover:bg-white/5 active:scale-90">
                         <ChevronLeft className="w-5 h-5" />
                     </Button>
                     <div className="h-4 w-[1px] bg-white/10 mx-1" />
-                    <div className="flex flex-col">
-                        <span className="text-sm font-black tracking-tight text-foreground leading-none">Portfolio Editor</span>
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">ID: {resumeId.split('-')[0]}</span>
+
+                    <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+                        <button
+                            onClick={() => setActiveMainTab('preview')}
+                            className={cn(
+                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all",
+                                activeMainTab === 'preview' ? "bg-white/10 text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                            )}
+                        >
+                            Preview
+                        </button>
+                        <button
+                            onClick={() => setActiveMainTab('templates')}
+                            className={cn(
+                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all",
+                                activeMainTab === 'templates' ? "bg-white/10 text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                            )}
+                        >
+                            Templates
+                        </button>
                     </div>
                 </div>
 
@@ -176,37 +232,69 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                     </Button>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    {isPublished && publishedUrl && (
-                        <Button variant="ghost" asChild className="hidden sm:flex rounded-xl font-bold text-muted-foreground hover:text-orange-500 transition-colors">
-                            <a href={publishedUrl} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                Live Site
-                            </a>
+                <div className="flex items-center gap-1 sm:gap-3">
+                    <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-2">
+                        <div className="w-10 h-10 flex items-center justify-center bg-orange-500/10 text-orange-500 rounded-xl border border-orange-500/20">
+                            <Settings className="w-5 h-5" />
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => router.push('/settings')}
+                            className="hidden sm:flex rounded-xl hover:bg-white/5"
+                        >
+                            <Globe className="w-5 h-5 text-muted-foreground" />
                         </Button>
+                    </div>
+
+                    {isPublished && publishedUrl && (
+                        <div className="hidden sm:flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 mr-2">
+                            <Button variant="ghost" asChild className="h-8 rounded-lg font-bold text-xs text-muted-foreground hover:text-orange-500 transition-colors px-3">
+                                <a href={publishedUrl} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="w-3.5 h-3.5 mr-2" />
+                                    Live
+                                </a>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={copyToClipboard}
+                                className="h-8 rounded-lg font-bold text-xs text-muted-foreground hover:text-foreground px-3"
+                            >
+                                {isCopied ? <Check className="w-3.5 h-3.5 mr-2 text-green-500" /> : <Copy className="w-3.5 h-3.5 mr-2" />}
+                                {isCopied ? 'Copied' : 'Copy'}
+                            </Button>
+                        </div>
                     )}
                     <Button
                         onClick={handlePublish}
                         disabled={isPublishing}
                         className={cn(
-                            "rounded-xl font-black px-6 transition-all",
+                            "rounded-xl font-black px-4 sm:px-6 transition-all text-[11px] sm:text-xs",
                             isPublished
                                 ? "bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                                : "bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 active:scale-95"
+                                : !isTemplateUnlocked(selectedTemplate)
+                                    ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg active:scale-95"
+                                    : "bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20 active:scale-95"
                         )}
                     >
-                        {isPublishing ? 'Updating...' : isPublished ? 'Unpublish' : 'Go Live'}
+                        {isPublishing ? '...' : isPublished ? 'Revert' : !isTemplateUnlocked(selectedTemplate) ? 'Unlock & Go Live' : 'Go Live'}
                     </Button>
                 </div>
             </header>
 
-            <div className="flex-1 flex overflow-hidden">
+            <div className="flex-1 flex overflow-hidden relative">
+                {/* Sidebar always visible */}
+
                 {/* Left Side: Sidebar/Settings Drawer */}
-                <aside className={cn(
-                    "fixed md:relative left-0 top-16 bottom-0 w-80 bg-background border-r border-white/5 transform transition-transform duration-500 ease-in-out z-40",
-                    !showSettings && "translate-x-full md:translate-x-0 md:w-0"
-                )}>
-                    <div className="h-full flex flex-col p-6 w-80">
+                <aside className="fixed md:relative left-0 top-0 bottom-0 w-80 bg-background border-r border-white/5 transform transition-transform duration-500 ease-in-out z-40 translate-x-0 opacity-100">
+                    <div className="h-full flex flex-col p-6">
+                        <div className="flex items-center justify-between mb-8 md:hidden">
+                            <h3 className="text-sm font-black uppercase tracking-widest text-foreground">Editor Tools</h3>
+                            <Button variant="ghost" size="icon" onClick={() => setShowSettings(false)} className="rounded-xl h-9 w-9">
+                                <ChevronLeft className="w-5 h-5" />
+                            </Button>
+                        </div>
                         {/* Tab Headers */}
                         <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 mb-8">
                             <button
@@ -259,15 +347,30 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                             <span className={cn("text-base font-black tracking-tight transition-colors flex items-center gap-2", selectedTemplate === tmpl.id ? "text-orange-500" : "text-foreground")}>
                                                                 {tmpl.name}
                                                                 {!isTemplateUnlocked(tmpl.id) && (
-                                                                    <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10">
-                                                                        <Lock className="w-2.5 h-2.5 text-muted-foreground" />
-                                                                        <span className="text-[9px] font-black text-muted-foreground/80">{tmpl.price}</span>
+                                                                    <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/20">
+                                                                        <Lock className="w-2.5 h-2.5 text-orange-500" />
+                                                                        <span className="text-[9px] font-black text-orange-500 uppercase">Premium</span>
                                                                     </div>
                                                                 )}
                                                             </span>
                                                             {selectedTemplate === tmpl.id && <Check className="w-4 h-4 text-orange-500" />}
                                                         </div>
                                                         <p className="text-xs font-medium text-muted-foreground leading-relaxed">{tmpl.description}</p>
+                                                        {selectedTemplate === tmpl.id && !isTemplateUnlocked(tmpl.id) && (
+                                                            <div className="mt-4 p-2 bg-orange-500/10 rounded-lg border border-orange-500/20 flex items-center justify-between">
+                                                                <span className="text-[10px] font-black uppercase text-orange-500">Premium Required</span>
+                                                                <Button
+                                                                    size="sm"
+                                                                    className="h-7 rounded-md bg-orange-500 hover:bg-orange-600 text-[10px] font-black"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        triggerPayment(tmpl.id, 'select');
+                                                                    }}
+                                                                >
+                                                                    Unlock Now
+                                                                </Button>
+                                                            </div>
+                                                        )}
                                                     </button>
                                                 ))}
                                             </div>
@@ -279,7 +382,7 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Site Config</h4>
                                             <div className="space-y-4">
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-bold text-foreground">Subdomain</label>
+                                                    <label className="text-xs font-bold text-foreground">Custom Subdomain</label>
                                                     <div className="relative group">
                                                         <input
                                                             type="text"
@@ -290,13 +393,39 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                         />
                                                         <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground pointer-events-none">.rume.app</div>
                                                     </div>
+                                                    {subdomain && (
+                                                        <p className="text-[10px] text-muted-foreground font-medium px-1">
+                                                            Your site will be available at <span className="text-orange-500">{subdomain}.rume.app</span>
+                                                        </p>
+                                                    )}
                                                 </div>
+
+                                                {isPublished && publishedUrl && (
+                                                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 space-y-2">
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-50">Live Link</p>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex-1 truncate text-[11px] font-bold text-foreground opacity-60">
+                                                                {publishedUrl}
+                                                            </div>
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                onClick={copyToClipboard}
+                                                                className="h-8 w-8 rounded-lg hover:bg-white/10 flex-shrink-0"
+                                                            >
+                                                                {isCopied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 <Button
                                                     onClick={handleSaveSettings}
                                                     disabled={isSaving}
-                                                    className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-bold transition-all"
+                                                    className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
                                                 >
-                                                    {isSaving ? 'Updating...' : 'Save Settings'}
+                                                    <Save className="w-4 h-4" />
+                                                    {isSaving ? 'Updating...' : 'Save Config'}
                                                 </Button>
                                             </div>
                                         </div>
@@ -370,42 +499,123 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                 </aside>
 
                 {/* Right Side: Preview Area */}
-                <main className="flex-1 bg-black/20 relative flex items-center justify-center p-4 md:p-12 overflow-hidden overflow-y-auto">
-                    <motion.div
-                        layout
-                        className={cn(
-                            "bg-white shadow-2xl transition-all duration-700 mx-auto transform-gpu",
-                            viewMode === 'desktop' ? "w-full max-w-5xl aspect-video rounded-2xl" : "w-[390px] h-[844px] rounded-[3rem] border-[8px] border-gray-900 overflow-hidden"
-                        )}
-                    >
-                        {/* Browser Bar Frame (only in desktop) */}
-                        {viewMode === 'desktop' && (
-                            <div className="h-10 bg-gray-100 border-b border-gray-200 flex items-center px-4 gap-4 rounded-t-2xl">
-                                <div className="flex gap-1.5">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
-                                    <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                <main className="flex-1 bg-black/20 relative flex items-center justify-center p-3 md:p-12 overflow-hidden overflow-y-auto custom-scrollbar">
+                    {activeMainTab === 'preview' ? (
+                        <motion.div
+                            layout
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className={cn(
+                                "bg-white shadow-2xl transition-all duration-700 mx-auto transform-gpu",
+                                viewMode === 'desktop' ? "w-full max-w-5xl aspect-[4/3] sm:aspect-video rounded-xl sm:rounded-2xl" : "w-full max-w-[390px] h-full max-h-[844px] rounded-[3rem] border-[8px] border-gray-900 overflow-hidden"
+                            )}
+                        >
+                            {/* Browser Bar Frame (only in desktop) */}
+                            {viewMode === 'desktop' && (
+                                <div className="h-10 bg-gray-100 border-b border-gray-200 flex items-center px-4 gap-4 rounded-t-2xl">
+                                    <div className="flex gap-1.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
+                                        <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                                    </div>
+                                    <div className="bg-white/80 h-6 flex-1 rounded-md border border-gray-200 flex items-center px-3 gap-2 max-w-md mx-auto">
+                                        <Globe className="w-3 h-3 text-gray-300" />
+                                        <span className="text-[10px] font-bold text-gray-400 tracking-tight truncate">
+                                            {subdomain ? `${subdomain}.rume.app` : `rume.app/portfolio/${resumeId.split('-')[0]}`}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="bg-white/80 h-6 flex-1 rounded-md border border-gray-200 flex items-center px-3 gap-2 max-w-md mx-auto">
-                                    <Globe className="w-3 h-3 text-gray-300" />
-                                    <span className="text-[10px] font-bold text-gray-400 tracking-tight truncate">
-                                        {subdomain ? `${subdomain}.rume.app` : `rume.app/portfolio/${resumeId.split('-')[0]}`}
-                                    </span>
-                                </div>
+                            )}
+                            <div className={cn("overflow-y-auto text-gray-900 relative", viewMode === 'desktop' ? "h-[calc(100%-40px)]" : "h-full")}>
+                                {!isTemplateUnlocked(selectedTemplate) && (
+                                    <div className="absolute inset-x-0 top-0 z-10 p-4 flex justify-center pointer-events-none">
+                                        <div className="bg-orange-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 border-2 border-white/20">
+                                            <Lock className="w-3 h-3" />
+                                            Locked Premium Template
+                                        </div>
+                                    </div>
+                                )}
+                                <TemplateComponent data={data} />
                             </div>
-                        )}
-                        <div className={cn("overflow-y-auto text-gray-900", viewMode === 'desktop' ? "h-[calc(100%-40px)]" : "h-full")}>
-                            <TemplateComponent data={data} />
+                        </motion.div>
+                    ) : (
+                        <div className="w-full h-full max-w-6xl mx-auto py-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                {TEMPLATES.map((tmpl) => (
+                                    <motion.div
+                                        key={tmpl.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className={cn(
+                                            "group relative flex flex-col bg-white/[0.03] rounded-[2.5rem] border transition-all overflow-hidden backdrop-blur-3xl",
+                                            selectedTemplate === tmpl.id ? "border-orange-500 shadow-2xl shadow-orange-500/10" : "border-white/5 hover:border-white/10"
+                                        )}
+                                    >
+                                        <div className={cn("aspect-[4/5] relative overflow-hidden bg-gradient-to-br",
+                                            tmpl.id === 'template-1' ? "from-slate-900 to-slate-800" : "from-orange-600/20 to-amber-600/20"
+                                        )}>
+                                            {/* Browser Mockup Frame (Scaled down for editor) */}
+                                            <div className="absolute inset-4 bottom-0 rounded-t-xl border-x border-t border-white/10 bg-white/5 shadow-2xl overflow-hidden">
+                                                <div className="h-4 bg-white/10 border-b border-white/10 flex items-center px-2 gap-1">
+                                                    <div className="w-1 h-1 rounded-full bg-red-400" />
+                                                    <div className="w-1 h-1 rounded-full bg-yellow-400" />
+                                                    <div className="w-1 h-1 rounded-full bg-green-400" />
+                                                </div>
+                                                <div className="absolute inset-0 top-4 scale-[0.4] origin-top-left h-[250%] w-[250%] bg-white pointer-events-none overflow-hidden">
+                                                    <div className="text-black transform-gpu p-8">
+                                                        {tmpl.id === 'template-2' ? <Template2 data={data} /> : <Template1 data={data} />}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4 z-20 backdrop-blur-[2px]">
+                                                <Button
+                                                    onClick={() => {
+                                                        handleTemplateChange(tmpl.id);
+                                                        setActiveMainTab('preview');
+                                                    }}
+                                                    className="rounded-full bg-white text-black font-black uppercase tracking-widest text-[10px] px-8 h-10 hover:scale-105 transition-transform"
+                                                >
+                                                    Select Design
+                                                </Button>
+                                                {selectedTemplate === tmpl.id && (
+                                                    <span className="text-[10px] font-black uppercase text-white/70">Currently Active</span>
+                                                )}
+                                            </div>
+
+                                            {!isTemplateUnlocked(tmpl.id) && (
+                                                <div className="absolute top-4 right-4 z-30">
+                                                    <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                                                        <Lock className="w-2.5 h-2.5 text-orange-500" />
+                                                        <span className="text-[9px] font-black text-white uppercase tracking-wider">{tmpl.price}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="p-8 space-y-3 mt-auto bg-gradient-to-b from-transparent to-white/[0.02]">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="text-xl font-black text-foreground tracking-tight">{tmpl.name}</h3>
+                                                {selectedTemplate === tmpl.id && <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center"><Check className="w-3.5 h-3.5 text-white" /></div>}
+                                            </div>
+                                            <p className="text-xs font-medium text-muted-foreground leading-relaxed line-clamp-2">{tmpl.description}</p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
                         </div>
-                    </motion.div>
+                    )}
                 </main>
             </div >
 
             <style>{`
-                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
+                .custom-scrollbar {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .custom-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
             `}</style>
         </div >
     )

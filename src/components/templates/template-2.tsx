@@ -62,7 +62,7 @@ export function Template2({ data }: { data: ResumeData }) {
                                     <div key={i}>
                                         <h4 className="text-[10px] font-black text-gray-500 mb-4 uppercase tracking-[0.2em]">{group.category}</h4>
                                         <div className="flex flex-wrap gap-2">
-                                            {group.items.map((skill, j) => (
+                                            {group.items?.map?.((skill, j) => (
                                                 <span key={j} className="text-xs px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 border border-white/5 hover:bg-purple-500/10 hover:border-purple-500/30 hover:text-purple-400 transition-all duration-300">
                                                     {skill}
                                                 </span>
