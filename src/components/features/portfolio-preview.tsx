@@ -5,27 +5,15 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    Settings,
-    Share2,
-    ChevronLeft,
-    ExternalLink,
-    Layout,
-    FileText,
-    Save,
-    Check,
-    Globe,
-    Monitor,
-    Smartphone,
-    History,
-    Zap,
-    ArrowUpRight
+    Settings, Share2, ChevronLeft, ExternalLink, Layout, FileText,
+    Save, Check, Globe, Monitor, Smartphone, History, Zap, ArrowUpRight, Lock
 } from 'lucide-react'
 
 import { ResumeData } from '@/lib/gemini'
 import { Template1 } from '@/components/templates/template-1'
 import { Template2 } from '@/components/templates/template-2'
 import { Button } from '@/components/ui/button'
-import { updateResumeTemplate, updateResumeSettings, updateResumeData } from '@/app/actions'
+import { updateResumeTemplate, updateResumeSettings, updateResumeData, createCheckoutSession } from '@/app/actions'
 import { cn } from '@/lib/utils'
 
 interface PortfolioPreviewProps {
@@ -33,14 +21,15 @@ interface PortfolioPreviewProps {
     resumeId: string
     initialTemplate?: string
     fileName?: string
+    hasFullAccess?: boolean
 }
 
 const TEMPLATES = [
-    { id: 'template-1', name: 'Executive', description: 'Clean, professional, and impactful', color: 'bg-blue-600' },
-    { id: 'template-2', name: 'Creative', description: 'Bold, modern, and high-energy', color: 'bg-orange-600' }
+    { id: 'template-1', name: 'Executive', description: 'Clean, professional, and impactful', color: 'bg-blue-600', isFree: true },
+    { id: 'template-2', name: 'Creative', description: 'Bold, modern, and high-energy', color: 'bg-orange-600', isFree: false, price: '₹99' }
 ]
 
-export function PortfolioPreview({ data: initialData, resumeId, initialTemplate, fileName }: PortfolioPreviewProps) {
+export function PortfolioPreview({ data: initialData, resumeId, initialTemplate, fileName, hasFullAccess = false }: PortfolioPreviewProps) {
     const router = useRouter()
     const [data, setData] = useState(initialData)
     const [selectedTemplate, setSelectedTemplate] = useState(initialTemplate || 'template-1')
@@ -52,13 +41,33 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
     const [isSaving, setIsSaving] = useState(false)
     const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop')
 
+    const [isPremium, setIsPremium] = useState(hasFullAccess)
+
     const [editSummary, setEditSummary] = useState(data.personalInfo.summary)
 
     const publishedUrl = isPublished
         ? `${window.location.origin}/portfolio/${resumeId}${subdomain ? `?s=${subdomain}` : ''}`
         : null
 
+    const isTemplateUnlocked = (templateId: string) => {
+        const template = TEMPLATES.find(t => t.id === templateId)
+        if (template?.isFree) return true
+        return isPremium
+    }
+
     const handleTemplateChange = async (templateId: string) => {
+        if (!isTemplateUnlocked(templateId)) {
+            // Trigger Stripe Payment
+            try {
+                const { url } = await createCheckoutSession(templateId, resumeId)
+                if (url) window.location.href = url
+            } catch (error) {
+                console.error("Payment error:", error)
+                alert("Failed to initiate payment. Please try again.")
+            }
+            return
+        }
+
         setSelectedTemplate(templateId)
         await updateResumeTemplate(resumeId, templateId)
     }
@@ -215,8 +224,14 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                         )}
                                                     >
                                                         <div className="flex items-center justify-between mb-2">
-                                                            <span className={cn("text-base font-black tracking-tight transition-colors", selectedTemplate === tmpl.id ? "text-orange-500" : "text-foreground")}>
+                                                            <span className={cn("text-base font-black tracking-tight transition-colors flex items-center gap-2", selectedTemplate === tmpl.id ? "text-orange-500" : "text-foreground")}>
                                                                 {tmpl.name}
+                                                                {!isTemplateUnlocked(tmpl.id) && (
+                                                                    <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10">
+                                                                        <Lock className="w-2.5 h-2.5 text-muted-foreground" />
+                                                                        <span className="text-[9px] font-black text-muted-foreground/80">{tmpl.price}</span>
+                                                                    </div>
+                                                                )}
                                                             </span>
                                                             {selectedTemplate === tmpl.id && <Check className="w-4 h-4 text-orange-500" />}
                                                         </div>
@@ -352,7 +367,7 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                         </div>
                     </motion.div>
                 </main>
-            </div>
+            </div >
 
             <style>{`
                 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -360,6 +375,6 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.05); border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.1); }
             `}</style>
-        </div>
+        </div >
     )
 }

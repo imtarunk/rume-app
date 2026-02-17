@@ -33,10 +33,20 @@ export default async function PreviewPage(props: { params: Promise<{ id: string 
     const rawData = resume.content
     const resumeData = validateAndFillDefaults(rawData)
 
+    // Check for premium access
+    const { data: premiumAccess } = await supabase
+        .from('premium_access')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+
+    const hasFullAccess = !!premiumAccess
+
     return <PortfolioPreview
         data={resumeData}
         resumeId={id}
         initialTemplate={resume.template_id}
         fileName={resume.file_name}
+        hasFullAccess={hasFullAccess}
     />
 }

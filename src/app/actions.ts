@@ -101,6 +101,50 @@ export async function updateResumeTemplate(resumeId: string, templateId: string)
     return { success: true }
 }
 
+import { stripe } from '@/lib/stripe'
+import { headers } from 'next/headers'
+
+export async function createCheckoutSession(templateId: string, resumeId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        throw new Error('Unauthorized')
+    }
+
+    const price = 99; // ₹99
+
+    const headersList = await headers()
+    const origin = headersList.get('origin') || 'http://localhost:3000'
+
+    const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [
+            {
+                price_data: {
+                    currency: 'inr',
+                    product_data: {
+                        name: `Rume Premium Upgrade`,
+                        description: 'Unlock all current and future premium templates forever.',
+                    },
+                    unit_amount: price * 100, // Amount in cents/paise
+                },
+                quantity: 1,
+            },
+        ],
+        mode: 'payment',
+        success_url: `${origin}/preview/${resumeId}?payment=success`,
+        cancel_url: `${origin}/preview/${resumeId}?payment=cancel`,
+        customer_email: user.email,
+        metadata: {
+            userId: user.id,
+            resumeId: resumeId
+        }
+    })
+
+    return { sessionId: session.id, url: session.url }
+}
+
 export async function updateResumeSettings(resumeId: string, settings: { is_published?: boolean, subdomain?: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -110,12 +154,25 @@ export async function updateResumeSettings(resumeId: string, settings: { is_publ
     // 1. Fetch existing content to merge settings
     const { data: resume, error: fetchError } = await supabase
         .from('resumes')
-        .select('content')
+        .select('content, template_id')
         .eq('id', resumeId)
         .eq('user_id', user.id)
         .single()
 
     if (fetchError || !resume) return { error: 'Resume not found' }
+
+    // Check if user is trying to publish a paid template without purchase
+    if (settings.is_published && resume.template_id !== 'template-1') {
+        const { data: purchase } = await supabase
+            .from('premium_access')
+            .select('id')
+            .eq('user_id', user.id)
+            .single()
+
+        if (!purchase) {
+            return { error: 'Premium subscription required' }
+        }
+    }
 
     const updatedContent = {
         ...resume.content,
@@ -125,10 +182,42 @@ export async function updateResumeSettings(resumeId: string, settings: { is_publ
         }
     }
 
-    // 2. Update content
+    // 2. Enforce one active portfolio rule
+    if (settings.is_published === true) {
+        // Unpublish all other resumes for this user
+        const { data: otherResumes } = await supabase
+            .from('resumes')
+            .select('id, content')
+            .eq('user_id', user.id)
+            .neq('id', resumeId)
+
+        if (otherResumes) {
+            for (const other of otherResumes) {
+                const otherContent = {
+                    ...other.content as any,
+                    settings: {
+                        ...(other.content as any).settings,
+                        is_published: false
+                    }
+                }
+                await supabase
+                    .from('resumes')
+                    .update({
+                        is_published: false,
+                        content: otherContent
+                    })
+                    .eq('id', other.id)
+            }
+        }
+    }
+
+    // 3. Update current resume
     const { error } = await supabase
         .from('resumes')
-        .update({ content: updatedContent })
+        .update({
+            content: updatedContent,
+            is_published: settings.is_published ?? (resume as any).is_published
+        })
         .eq('id', resumeId)
         .eq('user_id', user.id)
 
@@ -138,6 +227,8 @@ export async function updateResumeSettings(resumeId: string, settings: { is_publ
     }
 
     revalidatePath(`/preview/${resumeId}`)
+    revalidatePath(`/portfolio/${resumeId}`)
+    revalidatePath('/')
     return { success: true }
 }
 

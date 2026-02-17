@@ -1,3 +1,4 @@
+"use client";
 
 import { TheInfiniteGrid } from "@/components/ui/the-infinite-grid";
 import { Button } from "@/components/ui/button";
