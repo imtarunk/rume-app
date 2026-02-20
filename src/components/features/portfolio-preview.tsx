@@ -14,6 +14,7 @@ import { ResumeData } from '@/lib/gemini'
 import { Template1 } from '@/components/templates/template-1'
 import { Template2 } from '@/components/templates/template-2'
 import { Template3 } from '@/components/templates/template-3'
+import { Template4 } from '@/components/templates/template-4'
 import { Button } from '@/components/ui/button'
 import { updateResumeTemplate, updateResumeSettings, updateResumeData, createRazorpayOrder, uploadImage } from '@/app/actions'
 import { cn } from '@/lib/utils'
@@ -29,7 +30,8 @@ interface PortfolioPreviewProps {
 const TEMPLATES = [
     { id: 'template-1', name: 'Executive', description: 'Clean, professional, and impactful', color: 'bg-blue-600', isFree: true },
     { id: 'template-2', name: 'Creative', description: 'Bold, modern, and high-energy', color: 'bg-orange-600', isFree: false, price: 'Premium' },
-    { id: 'template-3', name: 'Bento', description: 'Sophisticated grid-based design', color: 'bg-[#D85828]', isFree: false, price: 'Premium' }
+    { id: 'template-3', name: 'Bento', description: 'Sophisticated grid-based design', color: 'bg-[#D85828]', isFree: false, price: 'Premium' },
+    { id: 'template-4', name: 'Modern Minimal', description: 'Sleek, emerald-accented, tech-first', color: 'bg-emerald-600', isFree: false, price: 'Premium' }
 ]
 
 export function PortfolioPreview({ data: initialData, resumeId, initialTemplate, fileName, hasFullAccess = false }: PortfolioPreviewProps) {
@@ -186,6 +188,7 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
         'template-1': Template1,
         'template-2': Template2,
         'template-3': Template3,
+        'template-4': Template4,
     } as Record<string, any>)[selectedTemplate]) || Template1
 
     return (
@@ -386,130 +389,229 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                 ))}
                                             </div>
                                         </div>
+                                        {(selectedTemplate === 'template-3' || selectedTemplate === 'template-4') && (
+                                            <>
+                                                <div className="h-px bg-white/5" />
+                                                <div className="space-y-4">
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-foreground">Profile Photo</label>
+                                                        <div className="relative group">
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                id="profile-image-upload"
+                                                                className="hidden"
+                                                                onChange={async (e) => {
+                                                                    const file = e.target.files?.[0]
+                                                                    if (!file) return
 
-                                        {selectedTemplate === 'template-3' && (
+                                                                    const formData = new FormData()
+                                                                    formData.append('image', file)
+
+                                                                    setIsSaving(true)
+                                                                    try {
+                                                                        const result = await uploadImage(formData, resumeId, 'profile')
+                                                                        if (result.success && result.imageUrl) {
+                                                                            const updatedData = { ...data }
+                                                                            if (!updatedData.personalInfo) updatedData.personalInfo = {} as any
+                                                                            (updatedData.personalInfo as any).profileImageUrl = result.imageUrl
+                                                                            setData(updatedData)
+                                                                        } else {
+                                                                            alert(result.error || 'Upload failed')
+                                                                        }
+                                                                    } catch (err) {
+                                                                        alert('An error occurred during upload')
+                                                                    } finally {
+                                                                        setIsSaving(false)
+                                                                    }
+                                                                }}
+                                                            />
+                                                            {(data.personalInfo as any)?.profileImageUrl ? (
+                                                                <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-white/10 group/img">
+                                                                    <img
+                                                                        src={(data.personalInfo as any).profileImageUrl}
+                                                                        alt="Profile"
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                    <label
+                                                                        htmlFor="profile-image-upload"
+                                                                        className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer flex flex-col items-center justify-center text-white"
+                                                                    >
+                                                                        <Upload className="w-6 h-6 mb-2" />
+                                                                        <span className="text-[10px] font-black uppercase tracking-widest">Change Photo</span>
+                                                                    </label>
+                                                                </div>
+                                                            ) : (
+                                                                <label
+                                                                    htmlFor="profile-image-upload"
+                                                                    className="w-full aspect-[3/4] border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center text-muted-foreground hover:border-orange-500/50 hover:bg-white/5 transition-all cursor-pointer group/upload"
+                                                                >
+                                                                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover/upload:scale-110 transition-transform">
+                                                                        <Upload className="w-6 h-6" />
+                                                                    </div>
+                                                                    <p className="text-xs font-black uppercase tracking-[0.1em]">Upload Photo</p>
+                                                                    <p className="text-[10px] mt-1 opacity-50 font-bold uppercase tracking-widest">Square or Portrait</p>
+                                                                </label>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {(selectedTemplate === 'template-3' || selectedTemplate === 'template-4') && (
+                                                        <div className="space-y-4 pt-4 border-t border-white/5">
+                                                            <div className="flex items-center justify-between">
+                                                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Template Visuals</h4>
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 bg-orange-500/10 text-orange-500 rounded-full border border-orange-500/20">Custom Assets</span>
+                                                            </div>
+
+                                                            <div className="space-y-4">
+                                                                {/* Project Visuals */}
+                                                                <div className="space-y-4">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Project Visuals</h5>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        {data.projects.slice(0, 4).map((project, idx) => (
+                                                                            <div key={idx} className="space-y-1.5">
+                                                                                <label className="text-[9px] font-black uppercase text-muted-foreground truncate block px-1">{project.name || `Project ${idx + 1}`}</label>
+                                                                                <div className="relative aspect-video rounded-xl border border-white/5 bg-white/5 overflow-hidden group/project">
+                                                                                    <input
+                                                                                        type="file"
+                                                                                        accept="image/*"
+                                                                                        id={`project-image-${idx}`}
+                                                                                        className="hidden"
+                                                                                        onChange={async (e) => {
+                                                                                            const file = e.target.files?.[0]
+                                                                                            if (!file) return
+                                                                                            const formData = new FormData()
+                                                                                            formData.append('image', file)
+                                                                                            setIsSaving(true)
+                                                                                            try {
+                                                                                                const result = await uploadImage(formData, resumeId, 'project', idx)
+                                                                                                if (result.success && result.imageUrl) {
+                                                                                                    const updatedData = { ...data }
+                                                                                                    updatedData.projects[idx].imageUrl = result.imageUrl
+                                                                                                    setData(updatedData)
+                                                                                                }
+                                                                                            } catch (err) {
+                                                                                                console.error('Project image upload failed')
+                                                                                            } finally {
+                                                                                                setIsSaving(false)
+                                                                                            }
+                                                                                        }}
+                                                                                    />
+                                                                                    {project.imageUrl ? (
+                                                                                        <img src={project.imageUrl} className="w-full h-full object-cover" alt="" />
+                                                                                    ) : (
+                                                                                        <div className="w-full h-full flex items-center justify-center opacity-10">
+                                                                                            <Layout className="w-5 h-5" />
+                                                                                        </div>
+                                                                                    )}
+                                                                                    <label htmlFor={`project-image-${idx}`} className="absolute inset-0 bg-black/60 opacity-0 group-hover/project:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
+                                                                                        <Upload className="w-4 h-4 text-white" />
+                                                                                    </label>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+
+                                        {selectedTemplate === 'template-4' && (
                                             <>
                                                 <div className="h-px bg-white/5" />
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between">
-                                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Template Images</h4>
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 bg-orange-500/10 text-orange-500 rounded-full border border-orange-500/20">Bento Style</span>
+                                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Template Settings</h4>
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20">Modern Style</span>
                                                     </div>
 
                                                     <div className="space-y-4">
                                                         <div className="space-y-2">
-                                                            <label className="text-xs font-bold text-foreground">Profile Photo</label>
-                                                            <div className="relative group">
-                                                                <input
-                                                                    type="file"
-                                                                    accept="image/*"
-                                                                    id="profile-image-upload"
-                                                                    className="hidden"
-                                                                    onChange={async (e) => {
-                                                                        const file = e.target.files?.[0]
-                                                                        if (!file) return
-
-                                                                        const formData = new FormData()
-                                                                        formData.append('image', file)
-
-                                                                        setIsSaving(true)
-                                                                        try {
-                                                                            const result = await uploadImage(formData, resumeId, 'profile')
-                                                                            if (result.success && result.imageUrl) {
-                                                                                const updatedData = { ...data }
-                                                                                if (!updatedData.personalInfo) updatedData.personalInfo = {} as any
-                                                                                (updatedData.personalInfo as any).profileImageUrl = result.imageUrl
-                                                                                setData(updatedData)
-                                                                            } else {
-                                                                                alert(result.error || 'Upload failed')
-                                                                            }
-                                                                        } catch (err) {
-                                                                            alert('An error occurred during upload')
-                                                                        } finally {
-                                                                            setIsSaving(false)
-                                                                        }
-                                                                    }}
-                                                                />
-                                                                {(data.personalInfo as any)?.profileImageUrl ? (
-                                                                    <div className="relative w-full aspect-[3/4] rounded-xl overflow-hidden border border-white/10 group/img">
-                                                                        <img
-                                                                            src={(data.personalInfo as any).profileImageUrl}
-                                                                            alt="Profile"
-                                                                            className="w-full h-full object-cover"
-                                                                        />
-                                                                        <label
-                                                                            htmlFor="profile-image-upload"
-                                                                            className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer flex flex-col items-center justify-center text-white"
-                                                                        >
-                                                                            <Upload className="w-6 h-6 mb-2" />
-                                                                            <span className="text-[10px] font-black uppercase tracking-widest">Change Photo</span>
-                                                                        </label>
-                                                                    </div>
-                                                                ) : (
-                                                                    <label
-                                                                        htmlFor="profile-image-upload"
-                                                                        className="w-full aspect-[3/4] border-2 border-dashed border-white/5 rounded-xl flex flex-col items-center justify-center text-muted-foreground hover:border-orange-500/50 hover:bg-white/5 transition-all cursor-pointer group/upload"
-                                                                    >
-                                                                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3 group-hover/upload:scale-110 transition-transform">
-                                                                            <Upload className="w-6 h-6" />
-                                                                        </div>
-                                                                        <p className="text-xs font-black uppercase tracking-[0.1em]">Upload Photo</p>
-                                                                        <p className="text-[10px] mt-1 opacity-50 font-bold uppercase tracking-widest">Square or Portrait</p>
-                                                                    </label>
-                                                                )}
-                                                            </div>
+                                                            <label className="text-xs font-bold text-foreground">GitHub Username</label>
+                                                            <input
+                                                                type="text"
+                                                                value={(data.personalInfo as any)?.githubUsername || ''}
+                                                                onChange={(e) => {
+                                                                    const updatedData = { ...data }
+                                                                    if (!updatedData.personalInfo) updatedData.personalInfo = {} as any
+                                                                    (updatedData.personalInfo as any).githubUsername = e.target.value
+                                                                    setData(updatedData)
+                                                                }}
+                                                                placeholder="e.g. imtarunks"
+                                                                className="w-full bg-white/5 border border-white/5 rounded-xl h-10 px-4 text-xs font-bold placeholder:text-muted-foreground/30 focus:border-emerald-500/50 outline-none transition-all text-white"
+                                                            />
+                                                            <p className="text-[9px] text-muted-foreground px-1 italic">Used for GitHub Activity Calendar</p>
                                                         </div>
 
-                                                        {/* Project Visuals */}
-                                                        <div className="space-y-4 pt-4 border-t border-white/5">
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-bold text-foreground">Calendly URL</label>
+                                                            <input
+                                                                type="text"
+                                                                value={(data.personalInfo as any)?.calendlyUrl || ''}
+                                                                onChange={(e) => {
+                                                                    const updatedData = { ...data }
+                                                                    if (!updatedData.personalInfo) updatedData.personalInfo = {} as any
+                                                                    (updatedData.personalInfo as any).calendlyUrl = e.target.value
+                                                                    setData(updatedData)
+                                                                }}
+                                                                placeholder="calendly.com/your-link"
+                                                                className="w-full bg-white/5 border border-white/5 rounded-xl h-10 px-4 text-xs font-bold placeholder:text-muted-foreground/30 focus:border-emerald-500/50 outline-none transition-all text-white"
+                                                            />
+                                                        </div>
+
+                                                        <div className="space-y-4 pt-2">
                                                             <div className="flex items-center justify-between">
-                                                                <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Project Visuals</h5>
+                                                                <label className="text-xs font-bold text-foreground">Blog Button</label>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const updatedData = { ...data }
+                                                                        if (!updatedData.settings) updatedData.settings = {} as any
+                                                                        (updatedData.settings as any).blogEnabled = !(updatedData.settings as any).blogEnabled
+                                                                        setData(updatedData)
+                                                                    }}
+                                                                    className={cn(
+                                                                        "w-8 h-4 rounded-full transition-colors relative",
+                                                                        (data.settings as any)?.blogEnabled ? "bg-emerald-500" : "bg-white/10"
+                                                                    )}
+                                                                >
+                                                                    <div className={cn(
+                                                                        "absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all",
+                                                                        (data.settings as any)?.blogEnabled ? "right-0.5" : "left-0.5"
+                                                                    )} />
+                                                                </button>
                                                             </div>
-                                                            <div className="grid grid-cols-2 gap-3">
-                                                                {data.projects.slice(0, 4).map((project, idx) => (
-                                                                    <div key={idx} className="space-y-1.5">
-                                                                        <label className="text-[9px] font-black uppercase text-muted-foreground truncate block px-1">{project.name || `Project ${idx + 1}`}</label>
-                                                                        <div className="relative aspect-video rounded-xl border border-white/5 bg-white/5 overflow-hidden group/project">
-                                                                            <input
-                                                                                type="file"
-                                                                                accept="image/*"
-                                                                                id={`project-image-${idx}`}
-                                                                                className="hidden"
-                                                                                onChange={async (e) => {
-                                                                                    const file = e.target.files?.[0]
-                                                                                    if (!file) return
-                                                                                    const formData = new FormData()
-                                                                                    formData.append('image', file)
-                                                                                    setIsSaving(true)
-                                                                                    try {
-                                                                                        const result = await uploadImage(formData, resumeId, 'project', idx)
-                                                                                        if (result.success && result.imageUrl) {
-                                                                                            const updatedData = { ...data }
-                                                                                            updatedData.projects[idx].imageUrl = result.imageUrl
-                                                                                            setData(updatedData)
-                                                                                        }
-                                                                                    } catch (err) {
-                                                                                        console.error('Project image upload failed')
-                                                                                    } finally {
-                                                                                        setIsSaving(false)
-                                                                                    }
-                                                                                }}
-                                                                            />
-                                                                            {project.imageUrl ? (
-                                                                                <img src={project.imageUrl} className="w-full h-full object-cover" alt="" />
-                                                                            ) : (
-                                                                                <div className="w-full h-full flex items-center justify-center opacity-10">
-                                                                                    <Layout className="w-5 h-5" />
-                                                                                </div>
-                                                                            )}
-                                                                            <label htmlFor={`project-image-${idx}`} className="absolute inset-0 bg-black/60 opacity-0 group-hover/project:opacity-100 transition-opacity cursor-pointer flex items-center justify-center">
-                                                                                <Upload className="w-4 h-4 text-white" />
-                                                                            </label>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
+                                                            {(data.settings as any)?.blogEnabled && (
+                                                                <input
+                                                                    type="text"
+                                                                    value={(data.settings as any)?.blogUrl || ''}
+                                                                    onChange={(e) => {
+                                                                        const updatedData = { ...data }
+                                                                        if (!updatedData.settings) updatedData.settings = {} as any
+                                                                        (updatedData.settings as any).blogUrl = e.target.value
+                                                                        setData(updatedData)
+                                                                    }}
+                                                                    placeholder="blog.yourdomain.com"
+                                                                    className="w-full bg-white/5 border border-white/5 rounded-xl h-10 px-4 text-xs font-bold focus:border-emerald-500/50 outline-none transition-all text-white"
+                                                                />
+                                                            )}
                                                         </div>
+
+                                                        <Button
+                                                            onClick={async () => {
+                                                                setIsSaving(true)
+                                                                await updateResumeData(resumeId, data as any)
+                                                                setIsSaving(false)
+                                                            }}
+                                                            disabled={isSaving}
+                                                            className="w-full h-10 bg-emerald-500 hover:bg-emerald-600 text-black rounded-xl font-bold transition-all text-[10px] uppercase tracking-widest mt-2"
+                                                        >
+                                                            {isSaving ? 'Saving...' : 'Save Design Config'}
+                                                        </Button>
                                                     </div>
                                                 </div>
                                             </>
@@ -596,8 +698,156 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                     className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
                                                 >
                                                     {isSaving ? <Zap className="w-4 h-4 animate-pulse" /> : <Save className="w-4 h-4" />}
-                                                    Update Content
+                                                    Update Summary
                                                 </Button>
+                                            </div>
+                                        </div>
+
+                                        <div className="h-px bg-white/5" />
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Experience Details</h4>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={async () => {
+                                                        setIsSaving(true);
+                                                        await updateResumeData(resumeId, data as any);
+                                                        setIsSaving(false);
+                                                    }}
+                                                    className="h-7 text-[9px] font-black uppercase tracking-widest text-emerald-500 hover:text-emerald-400"
+                                                >
+                                                    Save Changes
+                                                </Button>
+                                            </div>
+                                            <div className="space-y-6">
+                                                {data.workExperience.map((job, idx) => (
+                                                    <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[9px] font-black uppercase text-muted-foreground opacity-50">Role</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={job.position}
+                                                                    onChange={(e) => {
+                                                                        const updatedData = { ...data };
+                                                                        updatedData.workExperience[idx].position = e.target.value;
+                                                                        setData(updatedData);
+                                                                    }}
+                                                                    className="w-full bg-transparent border-b border-white/10 text-xs font-bold focus:border-emerald-500/50 outline-none pb-1 text-foreground"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[9px] font-black uppercase text-muted-foreground opacity-50">Company</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={job.company}
+                                                                    onChange={(e) => {
+                                                                        const updatedData = { ...data };
+                                                                        updatedData.workExperience[idx].company = e.target.value;
+                                                                        setData(updatedData);
+                                                                    }}
+                                                                    className="w-full bg-transparent border-b border-white/10 text-xs font-bold focus:border-emerald-500/50 outline-none pb-1 text-foreground"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[9px] font-black uppercase text-muted-foreground opacity-50">Start Date</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={job.startDate}
+                                                                    onChange={(e) => {
+                                                                        const updatedData = { ...data };
+                                                                        updatedData.workExperience[idx].startDate = e.target.value;
+                                                                        setData(updatedData);
+                                                                    }}
+                                                                    className="w-full bg-transparent border-b border-white/10 text-[10px] font-bold focus:border-emerald-500/50 outline-none pb-1 text-foreground"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[9px] font-black uppercase text-muted-foreground opacity-50">End Date</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={job.endDate}
+                                                                    onChange={(e) => {
+                                                                        const updatedData = { ...data };
+                                                                        updatedData.workExperience[idx].endDate = e.target.value;
+                                                                        setData(updatedData);
+                                                                    }}
+                                                                    className="w-full bg-transparent border-b border-white/10 text-[10px] font-bold focus:border-emerald-500/50 outline-none pb-1 text-foreground"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="h-px bg-white/5" />
+
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Detailed Projects</h4>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={async () => {
+                                                        setIsSaving(true);
+                                                        await updateResumeData(resumeId, data as any);
+                                                        setIsSaving(false);
+                                                    }}
+                                                    className="h-7 text-[9px] font-black uppercase tracking-widest text-emerald-500 hover:text-emerald-400"
+                                                >
+                                                    Save Changes
+                                                </Button>
+                                            </div>
+                                            <div className="space-y-6">
+                                                {data.projects.map((project, idx) => (
+                                                    <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[9px] font-black uppercase text-muted-foreground opacity-50">Project Name</label>
+                                                            <input
+                                                                type="text"
+                                                                value={project.name}
+                                                                onChange={(e) => {
+                                                                    const updatedData = { ...data };
+                                                                    updatedData.projects[idx].name = e.target.value;
+                                                                    setData(updatedData);
+                                                                }}
+                                                                className="w-full bg-transparent border-b border-white/10 text-xs font-bold focus:border-emerald-500/50 outline-none pb-1 text-foreground"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[9px] font-black uppercase text-muted-foreground opacity-50">Link</label>
+                                                            <input
+                                                                type="text"
+                                                                value={project.link}
+                                                                onChange={(e) => {
+                                                                    const updatedData = { ...data };
+                                                                    updatedData.projects[idx].link = e.target.value;
+                                                                    setData(updatedData);
+                                                                }}
+                                                                className="w-full bg-transparent border-b border-white/10 text-[10px] font-bold focus:border-emerald-500/50 outline-none pb-1 text-foreground"
+                                                                placeholder="https://..."
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[9px] font-black uppercase text-muted-foreground opacity-50">Description</label>
+                                                            <textarea
+                                                                value={project.description}
+                                                                onChange={(e) => {
+                                                                    const updatedData = { ...data };
+                                                                    updatedData.projects[idx].description = e.target.value;
+                                                                    setData(updatedData);
+                                                                }}
+                                                                rows={2}
+                                                                className="w-full bg-transparent border-b border-white/10 text-[10px] font-medium focus:border-emerald-500/50 outline-none pb-1 text-foreground resize-none"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
                                         </div>
 
@@ -702,7 +952,15 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                 </div>
                                                 <div className="absolute inset-0 top-4 scale-[0.4] origin-top-left h-[250%] w-[250%] bg-white pointer-events-none overflow-hidden">
                                                     <div className="text-black transform-gpu p-8">
-                                                        {tmpl.id === 'template-2' ? <Template2 data={data} /> : <Template1 data={data} />}
+                                                        {tmpl.id === 'template-4' ? (
+                                                            <Template4 data={data} />
+                                                        ) : tmpl.id === 'template-3' ? (
+                                                            <Template3 data={data} />
+                                                        ) : tmpl.id === 'template-2' ? (
+                                                            <Template2 data={data} />
+                                                        ) : (
+                                                            <Template1 data={data} />
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

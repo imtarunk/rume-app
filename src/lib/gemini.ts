@@ -19,6 +19,8 @@ export interface ResumeData {
         portfolioUrl: string
         summary: string
         profileImageUrl?: string
+        githubUsername?: string
+        calendlyUrl?: string
     }
     workExperience: {
         company: string
@@ -55,6 +57,8 @@ export interface ResumeData {
         is_published?: boolean
         subdomain?: string
         custom_domain?: string
+        blogEnabled?: boolean
+        blogUrl?: string
     }
 }
 
@@ -241,6 +245,8 @@ export function validateAndFillDefaults(data: any): ResumeData {
             portfolioUrl: personalInfo.portfolioUrl || "",
             summary: personalInfo.summary || "",
             profileImageUrl: personalInfo.profileImageUrl || "",
+            githubUsername: personalInfo.githubUsername || "",
+            calendlyUrl: personalInfo.calendlyUrl || "",
         },
         workExperience: Array.isArray(workExperience) ? workExperience : [],
         education: Array.isArray(education) ? education : [],

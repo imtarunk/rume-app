@@ -7,10 +7,10 @@ import { Icons } from '@/components/ui/icons'
 import { useRouter } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { User, Settings, ExternalLink, LogOut, ChevronDown } from 'lucide-react'
+import { User, Settings, ExternalLink, LogOut, ChevronDown, Shield } from 'lucide-react'
 import Link from 'next/link'
 
-export function UserMenu({ user, resumeId, isPublished }: { user: any, resumeId?: string, isPublished?: boolean }) {
+export function UserMenu({ user, resumeId, isPublished, isAdmin }: { user: any, resumeId?: string, isPublished?: boolean, isAdmin?: boolean }) {
     const [isLoading, setIsLoading] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -96,6 +96,17 @@ export function UserMenu({ user, resumeId, isPublished }: { user: any, resumeId?
                                 <Settings className="w-4 h-4 group-hover:text-orange-500 transition-colors" />
                                 Settings
                             </Link>
+
+                            {isAdmin && (
+                                <Link
+                                    href="/admin"
+                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold text-orange-500 hover:bg-orange-500/10 transition-all group"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    <Shield className="w-4 h-4" />
+                                    Admin Panel
+                                </Link>
+                            )}
                         </div>
 
                         <div className="p-2 border-t border-white/5">

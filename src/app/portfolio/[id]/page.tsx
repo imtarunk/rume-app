@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Template1 } from '@/components/templates/template-1'
 import { Template2 } from '@/components/templates/template-2'
+import { Template3 } from '@/components/templates/template-3'
+import { Template4 } from '@/components/templates/template-4'
 import { ResumeData, validateAndFillDefaults } from '@/lib/gemini'
 
 export default async function PortfolioPage({ params, searchParams }: {
@@ -37,7 +39,7 @@ export default async function PortfolioPage({ params, searchParams }: {
 
     const { data: resume, error } = await supabase
         .from('resumes')
-        .select('content, template_id')
+        .select('content, template_id, file_name')
         .eq('id', id)
         .eq('is_published', true)
         .single()
@@ -50,6 +52,15 @@ export default async function PortfolioPage({ params, searchParams }: {
 
     const resumeData = resume.content as unknown as ResumeData
     const templateId = template || resume.template_id || 'template-1'
+    const fileName = resume.file_name
+
+    if (templateId === 'template-4') {
+        return <Template4 data={resumeData} resumeId={id} fileName={fileName} />
+    }
+
+    if (templateId === 'template-3') {
+        return <Template3 data={resumeData} resumeId={id} fileName={fileName} />
+    }
 
     if (templateId === 'template-2') {
         return <Template2 data={resumeData} />

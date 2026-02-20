@@ -1,5 +1,4 @@
 import { razorpay } from '@/lib/razorpay'
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 
@@ -14,6 +13,7 @@ export async function POST(req: Request) {
         .digest('hex')
 
     if (expectedSignature !== signature) {
+        console.error('Invalid Razorpay signature. Expected:', expectedSignature, 'Received:', signature)
         return new NextResponse('Invalid signature', { status: 400 })
     }
 
@@ -23,15 +23,25 @@ export async function POST(req: Request) {
         const order = event.payload.order.entity
         const { userId } = order.notes
 
+        console.log('Processing payment for user:', userId)
+
         if (userId) {
-            const supabase = await createClient()
+            const { createAdminClient } = await import('@/lib/supabase/admin')
+            const supabase = createAdminClient()
 
             // Record the purchase for full access
-            await supabase
+            const { error } = await supabase
                 .from('premium_access')
                 .upsert({
                     user_id: userId
                 })
+
+            if (error) {
+                console.error('Error updating premium access:', error)
+                return new NextResponse('Database Error', { status: 500 })
+            }
+
+            console.log('Successfully unlocked premium for user:', userId)
         }
     }
 

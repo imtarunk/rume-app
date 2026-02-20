@@ -9,12 +9,10 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { TheInfiniteGrid } from '@/components/ui/the-infinite-grid'
 import { ArrowRight, Sparkles, Zap, Shield, Globe, Upload, Layout, Lock } from 'lucide-react'
-import { Template1 } from '@/components/templates/template-1'
-import { Template2 } from '@/components/templates/template-2'
-import { Template3 } from '@/components/templates/template-3'
+import { TemplateGallery } from '@/components/features/template-gallery'
+import { TemplateCard } from '@/components/features/template-card'
 import { cn } from '@/lib/utils'
 import { PricingManager } from '@/components/features/pricing-manager'
-import { TemplateCard } from '@/components/features/template-card'
 
 export default async function Home(props: { searchParams: Promise<{ new?: string }> }) {
   const { new: isNew } = await props.searchParams;
@@ -45,53 +43,9 @@ export default async function Home(props: { searchParams: Promise<{ new?: string
     }
   }
 
-  const MOCK_DATA = {
-    personalInfo: {
-      fullName: "Tarun Saini",
-      email: "tarun@codextarun.xyz",
-      phone: "+91 999999999",
-      location: "Chandigarh, India",
-      summary: "Full-stack developer with a passion for building high-quality, user-centric applications. Expert in React, Node.js, and modern web technologies.",
-      title: "Product Engineer",
-      linkedinUrl: "https://linkedin.com/in/tarun",
-      portfolioUrl: "https://codextarun.xyz",
-    },
-    workExperience: [
-      {
-        company: "Rume AI",
-        position: "Lead Engineer",
-        startDate: "2024-01",
-        endDate: "Present",
-        description: ["Leading development of AI-powered portfolio solutions.", "Implementing high-performance server-side rendering."],
-        skills: ["React", "Next.js", "TypeScript"]
-      }
-    ],
-    education: [
-      {
-        school: "Tech Institute",
-        degree: "B.Tech",
-        fieldOfStudy: "Computer Science",
-        startDate: "2018-07",
-        endDate: "2022-06"
-      }
-    ],
-    skills: [
-      {
-        category: "Tech Stack",
-        items: ["React", "TypeScript", "Next.js", "AI/ML", "UI Design"]
-      }
-    ],
-    projects: [
-      {
-        name: "Portfolio Builder",
-        description: "Automated resume-to-portfolio conversion with AI.",
-        technologies: ["Next.js", "Tailwind", "Gemini"],
-        link: "https://rume.app"
-      }
-    ]
-  }
 
   const isPublished = (resumeData?.content as any)?.settings?.is_published || false;
+  const isAdmin = user ? user.email === process.env.ADMIN_EMAIL : false
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-orange-500/30">
@@ -114,7 +68,7 @@ export default async function Home(props: { searchParams: Promise<{ new?: string
               </div>
               <div className="flex items-center gap-4">
                 {user ? (
-                  <UserMenu user={user} resumeId={resumeData?.id} isPublished={isPublished} />
+                  <UserMenu user={user} resumeId={resumeData?.id} isPublished={isPublished} isAdmin={isAdmin} />
                 ) : (
                   <LoginButton />
                 )}
@@ -297,73 +251,7 @@ export default async function Home(props: { searchParams: Promise<{ new?: string
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {[
-                { name: 'Executive', desc: 'Minimalist, powerful, and ultra-professional.', color: 'from-slate-900 to-slate-800', isFree: true, id: 'template-1', tag: 'Classic' },
-                { name: 'Creative', desc: 'Bold gradients and high-impact layouts.', color: 'from-orange-600/20 to-amber-600/20', isFree: false, id: 'template-2', tag: 'Bold' },
-                { name: 'Bento', desc: 'Sophisticated grid-based design.', color: 'from-orange-600/20 to-amber-600/20', isFree: false, id: 'template-3', tag: 'Modern' }
-              ].map((tmpl, i) => (
-                <TemplateCard key={i} className="group relative flex flex-col h-full active:scale-95 transition-all">
-                  <div className="absolute -inset-1 rounded-[3rem] bg-gradient-to-b from-white/10 to-transparent blur-xl transition-opacity opacity-0 group-hover:opacity-100" />
-                  <div className="relative flex-1 bg-white/[0.03] border border-white/10 rounded-[3rem] overflow-hidden backdrop-blur-3xl hover:border-white/20 transition-all duration-700 flex flex-col shadow-2xl">
-                    <div className={cn("aspect-[4/5] bg-gradient-to-br transition-all duration-700 relative overflow-hidden", tmpl.color)}>
-                      {/* Browser Mockup Frame */}
-                      <div className="absolute inset-6 bottom-0 rounded-t-[1.5rem] border-x border-t border-white/20 bg-white/5 shadow-2xl overflow-hidden">
-                        <div className="h-6 bg-white/10 border-b border-white/10 flex items-center px-3 gap-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                        </div>
-                        <div className="absolute inset-0 top-6 scale-[0.4] origin-top-left h-[250%] w-[250%] bg-white group-hover:scale-[0.42] transition-all duration-1000 pointer-events-none overflow-hidden">
-                          <div className="text-black transform-gpu p-10">
-                            {tmpl.id === 'template-1' && <Template1 data={MOCK_DATA as any} />}
-                            {tmpl.id === 'template-2' && <Template2 data={MOCK_DATA as any} />}
-                            {tmpl.id === 'template-3' && <Template3 data={MOCK_DATA as any} />}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Premium Label Overlay */}
-                      {!tmpl.isFree && (
-                        <div className="absolute top-8 right-8 z-10">
-                          <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 shadow-xl">
-                            <Lock className="w-3.5 h-3.5 text-orange-500" />
-                            <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Premium</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Floating Tag */}
-                      <div className="absolute top-8 left-8 z-10">
-                        <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[9px] font-black uppercase text-white/70 tracking-widest">
-                          {tmpl.tag}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-10 space-y-6 mt-auto bg-gradient-to-b from-transparent to-black/20">
-                      <div className="space-y-2">
-                        <h4 className="text-3xl font-black text-foreground tracking-tighter leading-none">{tmpl.name}</h4>
-                        <p className="text-muted-foreground font-medium line-clamp-2 text-sm leading-relaxed">
-                          {tmpl.desc}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                        <div className={cn(
-                          "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] border",
-                          tmpl.isFree ? "text-green-500 bg-green-500/5 border-green-500/20" : "text-orange-500 bg-orange-500/5 border-orange-500/20"
-                        )}>
-                          {tmpl.isFree ? 'Free To Start' : 'Premium Design'}
-                        </div>
-                        <div className="text-white hover:text-orange-500 transition-colors">
-                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </TemplateCard>
-              ))}
-            </div>
+            <TemplateGallery />
 
             <div className="mt-32 text-center relative">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-24 bg-orange-500/20 blur-[80px] opacity-30 rounded-full" />
