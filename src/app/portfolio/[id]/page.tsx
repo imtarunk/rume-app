@@ -5,6 +5,7 @@ import { Template1 } from '@/components/templates/template-1'
 import { Template2 } from '@/components/templates/template-2'
 import { Template3 } from '@/components/templates/template-3'
 import { Template4 } from '@/components/templates/template-4'
+import { Template5 } from '@/components/templates/template-5'
 import { ResumeData, validateAndFillDefaults } from '@/lib/gemini'
 
 export default async function PortfolioPage({ params, searchParams }: {
@@ -53,6 +54,10 @@ export default async function PortfolioPage({ params, searchParams }: {
     const resumeData = resume.content as unknown as ResumeData
     const templateId = template || resume.template_id || 'template-1'
     const fileName = resume.file_name
+
+    if (templateId === 'template-5') {
+        return <Template5 data={resumeData} resumeId={id} fileName={fileName} />
+    }
 
     if (templateId === 'template-4') {
         return <Template4 data={resumeData} resumeId={id} fileName={fileName} />

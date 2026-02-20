@@ -10,6 +10,7 @@ import { Template1 } from '@/components/templates/template-1'
 import { Template2 } from '@/components/templates/template-2'
 import { Template3 } from '@/components/templates/template-3'
 import { Template4 } from '@/components/templates/template-4'
+import { Template5 } from '@/components/templates/template-5'
 import { cn } from '@/lib/utils'
 import { Sparkles, Lock, ArrowRight, Eye, X } from 'lucide-react'
 
@@ -119,6 +120,14 @@ const TEMPLATES = [
         isFree: false,
         id: 'template-4',
         tag: 'Premium'
+    },
+    {
+        name: 'Designer',
+        desc: 'Elevated serif typography and organic layouts.',
+        color: 'from-blue-600/20 to-indigo-600/20',
+        isFree: false,
+        id: 'template-5',
+        tag: 'Artistic'
     }
 ]
 
@@ -131,6 +140,7 @@ export function TemplateGallery() {
             case 'template-2': return <Template2 data={data} />
             case 'template-3': return <Template3 data={data} />
             case 'template-4': return <Template4 data={data} />
+            case 'template-5': return <Template5 data={data} />
             default: return <Template1 data={data} />
         }
     }

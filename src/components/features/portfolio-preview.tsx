@@ -7,7 +7,7 @@ import Script from 'next/script'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Settings, Share2, ChevronLeft, ExternalLink, Layout, FileText,
-    Save, Check, Globe, Monitor, Smartphone, History, Zap, ArrowUpRight, Lock, Copy, Upload
+    Save, Check, Globe, Monitor, Smartphone, History, Zap, ArrowUpRight, Lock, Copy, Upload, Menu, X as CloseIcon
 } from 'lucide-react'
 
 import { ResumeData } from '@/lib/gemini'
@@ -15,6 +15,7 @@ import { Template1 } from '@/components/templates/template-1'
 import { Template2 } from '@/components/templates/template-2'
 import { Template3 } from '@/components/templates/template-3'
 import { Template4 } from '@/components/templates/template-4'
+import { Template5 } from '@/components/templates/template-5'
 import { Button } from '@/components/ui/button'
 import { updateResumeTemplate, updateResumeSettings, updateResumeData, createRazorpayOrder, uploadImage } from '@/app/actions'
 import { cn } from '@/lib/utils'
@@ -31,7 +32,8 @@ const TEMPLATES = [
     { id: 'template-1', name: 'Executive', description: 'Clean, professional, and impactful', color: 'bg-blue-600', isFree: true },
     { id: 'template-2', name: 'Creative', description: 'Bold, modern, and high-energy', color: 'bg-orange-600', isFree: false, price: 'Premium' },
     { id: 'template-3', name: 'Bento', description: 'Sophisticated grid-based design', color: 'bg-[#D85828]', isFree: false, price: 'Premium' },
-    { id: 'template-4', name: 'Modern Minimal', description: 'Sleek, emerald-accented, tech-first', color: 'bg-emerald-600', isFree: false, price: 'Premium' }
+    { id: 'template-4', name: 'Modern Minimal', description: 'Sleek, emerald-accented, tech-first', color: 'bg-emerald-600', isFree: false, price: 'Premium' },
+    { id: 'template-5', name: 'Designer', description: 'Artistic, serif-based editorial look', color: 'bg-indigo-600', isFree: false, price: 'Premium' }
 ]
 
 export function PortfolioPreview({ data: initialData, resumeId, initialTemplate, fileName, hasFullAccess = false }: PortfolioPreviewProps) {
@@ -52,10 +54,42 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
     const [editSummary, setEditSummary] = useState(data.personalInfo.summary)
     const [isCopied, setIsCopied] = useState(false)
     const [mounted, setMounted] = useState(false)
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [sidebarWidth, setSidebarWidth] = useState(320)
+    const [isResizing, setIsResizing] = useState(false)
 
     useEffect(() => {
         setMounted(true)
     }, [])
+
+    const startResizing = (e: React.MouseEvent) => {
+        e.preventDefault()
+        setIsResizing(true)
+    }
+
+    const stopResizing = () => {
+        setIsResizing(false)
+    }
+
+    const resize = (e: MouseEvent) => {
+        if (isResizing) {
+            const newWidth = e.clientX
+            if (newWidth > 280 && newWidth < 600) {
+                setSidebarWidth(newWidth)
+            }
+        }
+    }
+
+    useEffect(() => {
+        if (isResizing) {
+            window.addEventListener('mousemove', resize)
+            window.addEventListener('mouseup', stopResizing)
+        }
+        return () => {
+            window.removeEventListener('mousemove', resize)
+            window.removeEventListener('mouseup', stopResizing)
+        }
+    }, [isResizing])
 
     const publishedUrl = mounted && isPublished
         ? `${window.location.origin}/portfolio/${resumeId}${subdomain ? `?s=${subdomain}` : ''}`
@@ -130,6 +164,11 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
         if (isTemplateUnlocked(templateId)) {
             await updateResumeTemplate(resumeId, templateId)
         }
+
+        // Auto-close sidebar on mobile after selection
+        if (window.innerWidth < 768) {
+            setSidebarOpen(false)
+        }
     }
 
     const handlePublish = async () => {
@@ -189,6 +228,7 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
         'template-2': Template2,
         'template-3': Template3,
         'template-4': Template4,
+        'template-5': Template5,
     } as Record<string, any>)[selectedTemplate]) || Template1
 
     return (
@@ -198,18 +238,26 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                 src="https://checkout.razorpay.com/v1/checkout.js"
             />
             {/* Top Bar */}
-            <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 z-50 bg-background/80 backdrop-blur-md sticky top-0">
-                <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="rounded-xl hover:bg-white/5 active:scale-90">
+            <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-white/5 z-[60] bg-background/80 backdrop-blur-md sticky top-0">
+                <div className="flex items-center gap-2 sm:gap-3">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        className="md:hidden rounded-xl hover:bg-white/5 active:scale-90"
+                    >
+                        {sidebarOpen ? <CloseIcon className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => router.push('/')} className="rounded-xl hover:bg-white/5 active:scale-90 hidden sm:flex">
                         <ChevronLeft className="w-5 h-5" />
                     </Button>
-                    <div className="h-4 w-[1px] bg-white/10 mx-1" />
+                    <div className="h-4 w-[1px] bg-white/10 mx-1 hidden sm:block" />
 
-                    <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10">
+                    <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10 ml-1 sm:ml-0">
                         <button
                             onClick={() => setActiveMainTab('preview')}
                             className={cn(
-                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all",
+                                "px-2 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-tight transition-all",
                                 activeMainTab === 'preview' ? "bg-white/10 text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
@@ -218,7 +266,7 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                         <button
                             onClick={() => setActiveMainTab('templates')}
                             className={cn(
-                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-tight transition-all",
+                                "px-2 sm:px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-tight transition-all",
                                 activeMainTab === 'templates' ? "bg-white/10 text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                             )}
                         >
@@ -300,8 +348,28 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
             <div className="flex-1 flex overflow-hidden relative">
                 {/* Sidebar always visible */}
 
+                {/* Overlay for mobile sidebar */}
+                <AnimatePresence>
+                    {sidebarOpen && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSidebarOpen(false)}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden"
+                        />
+                    )}
+                </AnimatePresence>
+
                 {/* Left Side: Sidebar/Settings Drawer */}
-                <aside className="fixed md:relative left-0 top-0 bottom-0 w-80 bg-background border-r border-white/5 transform transition-transform duration-500 ease-in-out z-40 translate-x-0 opacity-100">
+                <aside
+                    style={{ width: mounted && window.innerWidth >= 768 ? `${sidebarWidth}px` : undefined }}
+                    className={cn(
+                        "fixed md:relative left-0 top-0 bottom-0 bg-background border-r border-white/5 transform transition-all duration-300 ease-in-out z-40 flex flex-col pt-16 md:pt-0",
+                        sidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full md:translate-x-0 opacity-100",
+                        !sidebarOpen && "md:w-80" // Fallback if no width set
+                    )}
+                >
                     <div className="h-full flex flex-col p-6">
                         <div className="flex items-center justify-between mb-8 md:hidden">
                             <h3 className="text-sm font-black uppercase tracking-widest text-foreground">Editor Tools</h3>
@@ -389,7 +457,7 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                 ))}
                                             </div>
                                         </div>
-                                        {(selectedTemplate === 'template-3' || selectedTemplate === 'template-4') && (
+                                        {(selectedTemplate === 'template-3' || selectedTemplate === 'template-4' || selectedTemplate === 'template-5') && (
                                             <>
                                                 <div className="h-px bg-white/5" />
                                                 <div className="space-y-4">
@@ -456,7 +524,7 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                         </div>
                                                     </div>
 
-                                                    {(selectedTemplate === 'template-3' || selectedTemplate === 'template-4') && (
+                                                    {(selectedTemplate === 'template-3' || selectedTemplate === 'template-4' || selectedTemplate === 'template-5') && (
                                                         <div className="space-y-4 pt-4 border-t border-white/5">
                                                             <div className="flex items-center justify-between">
                                                                 <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Template Visuals</h4>
@@ -887,6 +955,18 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                     </div>
                 </aside>
 
+                {/* Resize Handle */}
+                <div
+                    onMouseDown={startResizing}
+                    className={cn(
+                        "hidden md:block absolute top-0 bottom-0 w-1.5 cursor-col-resize z-50 transition-colors group",
+                        isResizing ? "bg-orange-500/50" : "hover:bg-orange-500/30"
+                    )}
+                    style={{ left: `${sidebarWidth - 3}px` }}
+                >
+                    <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-white/5 group-hover:bg-orange-500/50" />
+                </div>
+
                 {/* Right Side: Preview Area */}
                 <main className="flex-1 bg-black/20 relative flex items-center justify-center p-3 md:p-12 overflow-hidden overflow-y-auto custom-scrollbar">
                     {activeMainTab === 'preview' ? (
@@ -896,7 +976,9 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                             animate={{ opacity: 1, scale: 1 }}
                             className={cn(
                                 "bg-white shadow-2xl transition-all duration-700 mx-auto transform-gpu",
-                                viewMode === 'desktop' ? "w-full max-w-5xl aspect-[4/3] sm:aspect-video rounded-xl sm:rounded-2xl" : "w-full max-w-[390px] h-full max-h-[844px] rounded-[3rem] border-[8px] border-gray-900 overflow-hidden"
+                                viewMode === 'desktop'
+                                    ? "w-full max-w-5xl h-[80vh] md:h-auto md:aspect-video rounded-xl sm:rounded-2xl"
+                                    : "w-full max-w-[320px] sm:max-w-[390px] h-full max-h-[600px] sm:max-h-[844px] rounded-[2.5rem] sm:rounded-[3rem] border-[6px] sm:border-[8px] border-gray-900 overflow-hidden"
                             )}
                         >
                             {/* Browser Bar Frame (only in desktop) */}
@@ -952,7 +1034,9 @@ export function PortfolioPreview({ data: initialData, resumeId, initialTemplate,
                                                 </div>
                                                 <div className="absolute inset-0 top-4 scale-[0.4] origin-top-left h-[250%] w-[250%] bg-white pointer-events-none overflow-hidden">
                                                     <div className="text-black transform-gpu p-8">
-                                                        {tmpl.id === 'template-4' ? (
+                                                        {tmpl.id === 'template-5' ? (
+                                                            <Template5 data={data} />
+                                                        ) : tmpl.id === 'template-4' ? (
                                                             <Template4 data={data} />
                                                         ) : tmpl.id === 'template-3' ? (
                                                             <Template3 data={data} />
